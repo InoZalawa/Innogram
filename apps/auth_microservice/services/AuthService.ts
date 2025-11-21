@@ -1,6 +1,5 @@
 import { Pool } from 'pg';
-// Import 'bcrypt' lub podobnej biblioteki do hashowania
-// import bcrypt from 'bcrypt'; 
+import bcrypt from 'bcrypt'; 
 
 const pool = new Pool({
     user: 'root',
@@ -21,7 +20,7 @@ class SignUpDto {
 const registerUser = async (signUpDto: SignUpDto) => {
     
     if (signUpDto.password !== signUpDto.repeatPassword) {
-        console.error("Hasła się nie zgadzają.");
+        console.log("PASSWORDS ARENT MATCHING");
         return 0 
     }
 
@@ -29,8 +28,14 @@ const registerUser = async (signUpDto: SignUpDto) => {
 
     try {
         await client.query('BEGIN');
-
-        const encryptedPassword = signUpDto.password // TODO bcrypt
+        let encryptedPassword
+        bcrypt.hash(signUpDto.password,12,(err: Error | undefined, encrypted: string)=>{
+            if(err){
+                console.log(err)
+                return 0
+            }
+            encryptedPassword = encrypted
+        })
 
         const userUniqnessQuery = `
         SELECT 1 FROM users 
