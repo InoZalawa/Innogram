@@ -1,11 +1,17 @@
 import { Pool } from 'pg';
+
 import bcrypt from 'bcrypt'; 
 
+import * as env from 'dotenv';
+
+env.config();
+
 const pool = new Pool({
-    user: 'root',
-    host: 'localhost',
-    database: 'users',
-    port: 5432,
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DB_DATABASE,
+    port:  parseInt(process.env.DB_PORT || '5432', 10), //temporary solution 
+    password: process.env.DB_PASSWORD,
 });
 
 class SignUpDto {
@@ -27,7 +33,7 @@ const registerUser = async (signUpDto: SignUpDto) => {
     const client = await pool.connect()
 
     try {
-        await client.query('BEGIN');
+        await client.query('BEGIN;');
         let encryptedPassword
         bcrypt.hash(signUpDto.password,12,(err: Error | undefined, encrypted: string)=>{
             if(err){
@@ -39,15 +45,15 @@ const registerUser = async (signUpDto: SignUpDto) => {
 
         const userUniqnessQuery = `
         SELECT 1 FROM users 
-        WHERE email = $1 AND username = $2
-        LIMIT 1`
+        WHERE email = $1 OR username = $2
+        LIMIT 1;`
 
         const isUserUnique = await client.query(userUniqnessQuery, [signUpDto.email, signUpDto.username])
 
         if (isUserUnique.rows.length === 0) {
             const insertUserQuery = `
             INSERT INTO users(username, password, email)
-            VALUES($1, $2, $3)`
+            VALUES($1, $2, $3);`
             await client.query(insertUserQuery, [signUpDto.username, encryptedPassword, signUpDto.email])
             console.log("Użytkownik zarejestrowany pomyślnie.")
         } else {

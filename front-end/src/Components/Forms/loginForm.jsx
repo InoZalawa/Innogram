@@ -1,4 +1,4 @@
-const loginForm = () =>{
+const LoginForm = () =>{
   return(
     <div>
       <h2>Log in!</h2>
@@ -23,3 +23,5 @@ const loginForm = () =>{
     </div>
   )
 }
+
+export default LoginForm
