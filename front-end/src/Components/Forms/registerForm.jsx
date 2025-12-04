@@ -1,130 +1,169 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from "react";
 
-import InputComponent  from '../InputComponent'
+import Input from "../Input";
 
-import axios from 'axios'
+const mailRegex = new RegExp(/@/); //TODO proper regex
+//const passwordRegex = new RegExp(/^(?=.*\d)(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z]).{8,}$/)
+const lenRegex = new RegExp(/^.{8,}$/);
+const lowerUpperCaseRegex = new RegExp(/^(?=.*[a-z])(?=.*[A-Z]).+$/);
+const specialCharRegex = new RegExp(/^(?=.*[!@#$%^&*]).+$/);
+const numberRegex = new RegExp(/^(?=.*\d).+$/);
+/* at least 1 Upper/Lower case
+ * at least 1 Special char
+ * at least 1 number
+ * at least 8 character long
+ */
 
-const RegisterForm = () =>{
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
-  const [repeatPassword, setrepeatPassword] = useState("")
-  const [mail, setMail] = useState("")
+const passwordValidationArr = [
+  { regex: lenRegex, message: "must be at least 8 character long" },
+  {
+    regex: lowerUpperCaseRegex,
+    message: "must have at least 1 uppercase letter and 1 lowercase letter",
+  },
+  {
+    regex: specialCharRegex,
+    message: "must have at least 1 special character",
+  },
+  { regex: numberRegex, message: "must contain at least 1 digit " },
+];
 
-  const [passwordErrors,setPasswordError] = useState([])
-  const [repeatedPasswordError, setRepeatedPasswordError] = useState([])
-  const [usernameError, setUsernameError] = useState([])
-  const [mailError, setMailError] = useState([])
-  
-  const mailRegex = new RegExp(/@/) //TODO proper regex
-  //const passwordRegex = new RegExp(/^(?=.*\d)(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z]).{8,}$/)
-  const lenRegex = new RegExp(/^.{8,}$/);
-  const lowerUpperCaseRegex = new RegExp(/^(?=.*[a-z])(?=.*[A-Z]).+$/);
-  const specialCharRegex = new RegExp(/^(?=.*[!@#$%^&*]).+$/);
-  const numberRegex = new RegExp(/^(?=.*\d).+$/);
-  /* at least 1 Upper/Lower case
-   * at least 1 Special char
-   * at least 1 number
-   * at least 8 character long
-   */
+const usernameValidationArr = [
+  { regex: lenRegex, message: "must be at least 8 character long" },
+];
 
-  const passwordValidationArr = [
-    {regex: lenRegex, message:"must be at least 8 character long"},
-    {regex: lowerUpperCaseRegex, message:"must have at least 1 uppercase letter and 1 lowercase letter"},
-    {regex: specialCharRegex, message:"must have at least 1 special character"},
-    {regex: numberRegex, message:"must contain at least 1 digit "}
-  ]
+const mailValidationArr = [{ regex: mailRegex, message: "placeholder" }];
 
-  const usernameValidationArr = [
-    {regex: lenRegex, message:"must be at least 8 character long"},
+import axios from "axios";
+const mailRegex = new RegExp(/@/); //TODO proper regex
+//const passwordRegex = new RegExp(/^(?=.*\d)(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z]).{8,}$/)
+const lenRegex = new RegExp(/^.{8,}$/);
+const lowerUpperCaseRegex = new RegExp(/^(?=.*[a-z])(?=.*[A-Z]).+$/);
+const specialCharRegex = new RegExp(/^(?=.*[!@#$%^&*]).+$/);
+const numberRegex = new RegExp(/^(?=.*\d).+$/);
+/* at least 1 Upper/Lower case
+ * at least 1 Special char
+ * at least 1 number
+ * at least 8 character long
+ */
 
-  ]
+const passwordValidationArr = [
+  { regex: lenRegex, message: "must be at least 8 character long" },
+  {
+    regex: lowerUpperCaseRegex,
+    message: "must have at least 1 uppercase letter and 1 lowercase letter",
+  },
+  {
+    regex: specialCharRegex,
+    message: "must have at least 1 special character",
+  },
+  { regex: numberRegex, message: "must contain at least 1 digit " },
+];
 
-  const mailValidationArr = [
-    {regex: mailRegex, message:"placeholder"},
+const usernameValidationArr = [
+  { regex: lenRegex, message: "must be at least 8 character long" },
+];
 
-  ]
+const mailValidationArr = [{ regex: mailRegex, message: "placeholder" }];
 
-  const handleRegex = (validationArr, validatedText) =>{
-    let errorMesArr = []
-    validationArr.forEach(criterion => {
-      if(!criterion.regex.test(validatedText)){
-        errorMesArr.push(criterion.message)
+const RegisterForm = () => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [repeatPassword, setrepeatPassword] = useState("");
+  const [mail, setMail] = useState("");
+
+  const [passwordErrors, setPasswordError] = useState([]);
+  const [repeatedPasswordError, setRepeatedPasswordError] = useState([]);
+  const [usernameError, setUsernameError] = useState([]);
+  const [mailError, setMailError] = useState([]);
+
+  const handleRegex = (validationArr, validatedText) => {
+    let errorMesArr = [];
+    validationArr.forEach((criterion) => {
+      if (!criterion.regex.test(validatedText)) {
+        errorMesArr.push(criterion.message);
       }
     });
-    return errorMesArr
-  }
+    return errorMesArr;
+  };
 
-  const handleSubmit = async(e) =>{
-    e.preventDefault()
-    if(password !== repeatPassword){
-      setRepeatedPasswordError(["passwords must be identical"])
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (password !== repeatPassword) {
+      setRepeatedPasswordError(["passwords must be identical"]);
     }
-    setPasswordError(handleRegex(passwordValidationArr,password))
-    setUsernameError(handleRegex(usernameValidationArr,username))
-    setMailError(handleRegex(mailValidationArr,mail))
+    setPasswordError(handleRegex(passwordValidationArr, password));
+    setUsernameError(handleRegex(usernameValidationArr, username));
+    setMailError(handleRegex(mailValidationArr, mail));
 
-    const ANY_ERRORS = passwordErrors.length !== 0 ||repeatedPasswordError.length !== 0 || usernameError.length !== 0 || mailError.length !== 0 
+    const ANY_ERRORS =
+      passwordErrors.length !== 0 ||
+      repeatedPasswordError.length !== 0 ||
+      usernameError.length !== 0 ||
+      mailError.length !== 0;
 
-    if(ANY_ERRORS){
-      return 
+    if (ANY_ERRORS) {
+      return;
     }
-    
-    
-    try
-    {
+
+    try {
       const response = await axios.post("/auth/signup", {
-      password: password,
-      username: username,
-      email: mail
+        password: password,
+        username: username,
+        email: mail,
       });
-      console.log(response.data)
-  }catch(err){
-    //setFormError(err)
-  }
-  }
+      console.log(response.data);
+    } catch (err) {
+      //setFormError(err)
+    }
+  };
 
-  return(
+  return (
     <div>
       <h2>Sign up!</h2>
-    <form onSubmit={handleSubmit}>
-      <InputComponent
-      inputName="Username"
-      inputType="text"
-      stateValue={username}
-      setStateValue={setUsername}
-      errorsArr={usernameError}/>
+      <form onSubmit={handleSubmit}>
+        <Input
+          inputName="Username"
+          inputType="text"
+          stateValue={username}
+          setStateValue={setUsername}
+          errorsArr={usernameError}
+        />
 
-      <InputComponent
-      inputName="Email"
-      inputType="email"
-      stateValue={mail}
-      setStateValue={setMail}
-      errorsArr={mailError}/>
+        <Input
+          inputName="Email"
+          inputType="email"
+          stateValue={mail}
+          setStateValue={setMail}
+          errorsArr={mailError}
+        />
 
-      <InputComponent
-      inputName="Password"
-      inputType="password"
-      stateValue={password}
-      setStateValue={setPassword}
-      errorsArr={passwordErrors}/>
+        <Input
+          inputName="Password"
+          inputType="password"
+          stateValue={password}
+          setStateValue={setPassword}
+          errorsArr={passwordErrors}
+        />
 
-      <InputComponent
-      inputName="Repeat password"
-      inputType="password"
-      stateValue={repeatPassword}
-      setStateValue={setrepeatPassword}
-      errorsArr={repeatedPasswordError}/>
+        <Input
+          inputName="Repeat password"
+          inputType="password"
+          stateValue={repeatPassword}
+          setStateValue={setrepeatPassword}
+          errorsArr={repeatedPasswordError}
+        />
 
-      <button type="submit">Submit</button>
-    </form>
-    <div>
-    <p>
-      or just sign up with Google account!
-    </p>
-       
+        <button type="submit">Submit</button>
+      </form>
+      <div>
+        <p>or just sign up with Google account!</p>
+      </div>
+      <p>
+        Already have a account?
+        <br />
+        <a href="">Log in here</a>
+      </p>
     </div>
-    <p>Already have a account?<br/><a href="">Log in here</a></p>
-    </div>
-  )
-}
-export default RegisterForm
+  );
+};
+export default RegisterForm;

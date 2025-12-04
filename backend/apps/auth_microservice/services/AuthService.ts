@@ -1,70 +1,130 @@
-import { Pool } from 'pg';
-
-import bcrypt from 'bcrypt'; 
+import bcrypt from 'bcrypt';
 
 import * as env from 'dotenv';
 
+import jwt from 'jsonwebtoken';
+
+import { SignUpDto } from '../DTO/SignUpDTO';
+
+import { LogInDTO } from '../DTO/LogInDTO';
+
+import prisma from '../db/prismaClient';
+
+//import { Prisma } from '@prisma/client';
+
 env.config();
 
-const pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_DATABASE,
-    port:  parseInt(process.env.DB_PORT || '5432', 10), //temporary solution 
-    password: process.env.DB_PASSWORD,
-});
+export const registerUser = async (signUpDto: SignUpDto) => {
+  let result = {
+    success: false,
+    status: 500,
+    message: 'INTERNAL SERVER ERROR',
+  };
 
-class SignUpDto {
-    public constructor(
-        readonly username: string,
-        readonly password: string,
-        readonly repeatPassword: string,
-        readonly email: string
-    ) {}
-}
+  if (signUpDto.password !== signUpDto.repeatPassword) {
+    console.log('PASSWORDS ARENT MATCHING');
+    return {
+      success: false,
+      status: 400,
+      message: 'PASSWORDS ARE NOT THE SAME',
+    };
+  }
 
-const registerUser = async (signUpDto: SignUpDto) => {
-    
-    if (signUpDto.password !== signUpDto.repeatPassword) {
-        console.log("PASSWORDS ARENT MATCHING");
-        return 0 
+  try {
+    await prisma.$transaction(async (tx: any) => {
+      const encryptedPassword = await bcrypt.hash(signUpDto.password, 12);
+
+      const isUserUnique = await tx.user.findFirst({
+        where: {
+          OR: [{ email: signUpDto.email }, { username: signUpDto.username }],
+        },
+      });
+
+      if (!isUserUnique) {
+        await tx.user.create({
+          data: {
+            username: signUpDto.username,
+            password: encryptedPassword,
+            email: signUpDto.email,
+          },
+        });
+
+        console.log('NEW USER REGISTERED');
+        result = { success: true, status: 201, message: 'SUCCESS' };
+      } else {
+        console.log('USER ALREADY EXISTS');
+        result = { success: false, status: 409, message: 'USER IS NOT UNIQUE' };
+      }
+    });
+  } catch (err) {
+    console.error('REGISTRATION ERROR:', err);
+    result = { success: false, status: 500, message: 'DB ERROR' };
+  } finally {
+    return result;
+  }
+};
+
+export const logInUser = async (logInDto: LogInDTO) => {
+  const TOKEN_KEY = process.env.JWT_KEY;
+  if (!TOKEN_KEY) {
+    throw new Error('wrong JWT KEY');
+  }
+
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [{ username: logInDto.login }, { email: logInDto.login }],
+      },
+    });
+
+    if (!user) {
+      return { success: false, status: 401, message: 'WRONG LOGIN/PASSWORD' };
     }
 
-    const client = await pool.connect()
+    const arePasswordsMatching = await bcrypt.compare(
+      logInDto.password,
+      user.password
+    );
 
-    try {
-        await client.query('BEGIN;');
-        let encryptedPassword
-        bcrypt.hash(signUpDto.password,12,(err: Error | undefined, encrypted: string)=>{
-            if(err){
-                console.log(err)
-                return 0
-            }
-            encryptedPassword = encrypted
-        })
+    if (arePasswordsMatching) {
+      const tokenPayload = {
+        userId: user.id,
+        sub: user.email,
+      };
 
-        const userUniqnessQuery = `
-        SELECT 1 FROM users 
-        WHERE email = $1 OR username = $2
-        LIMIT 1;`
+      const accessOptions = {
+        issuer: 'innogram-auth-service',
+        expiresIn: 60 * 3, // 3 minutes
+      };
+      const accessToken = jwt.sign(tokenPayload, TOKEN_KEY, accessOptions);
 
-        const isUserUnique = await client.query(userUniqnessQuery, [signUpDto.email, signUpDto.username])
+      const refreshOptions = {
+        issuer: 'innogram-auth-service',
+        expiresIn: 60 * 10, // 10 minutes
+      };
+      const refreshToken = jwt.sign(tokenPayload, TOKEN_KEY, refreshOptions);
 
-        if (isUserUnique.rows.length === 0) {
-            const insertUserQuery = `
-            INSERT INTO users(username, password, email)
-            VALUES($1, $2, $3);`
-            await client.query(insertUserQuery, [signUpDto.username, encryptedPassword, signUpDto.email])
-            console.log("Użytkownik zarejestrowany pomyślnie.")
-        } else {
-            console.log("USER ALREADY EXISTS")
-        }
+      await prisma.$transaction([
+        prisma.refreshToken.create({
+          data: {
+            token: refreshToken,
+            userId: user.id,
+          },
+        }),
+      ]);
 
-        await client.query("COMMIT")
-    } catch (err) {
-        console.log("REGISTRATION ERROR:", err)
-        await client.query("ROLLBACK")
-    } finally {
-        client.release();
+      return {
+        success: true,
+        status: 200,
+        message: 'SUCCESS: USER LOGGED IN',
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+      };
+    } else {
+      return { success: false, status: 401, message: 'WRONG LOGIN/PASSWORD' };
     }
+  } catch (err) {
+    console.error('LOG IN ERROR:', err);
+    return { success: false, status: 500, message: 'DB ERROR' };
+  }
 };
