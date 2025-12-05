@@ -1,0 +1,17 @@
+datasource db {
+  provider = "postgresql" 
+}
+
+model User {
+  id              Int            @id @default(autoincrement())
+  username        String         @unique
+  email           String         @unique
+  password        String
+  refreshTokens   RefreshToken[]
+}
+
+model RefreshToken {
+  token           String         @id
+  userId          Int
+  user            User           @relation(fields: [userId], references: [id])
+}

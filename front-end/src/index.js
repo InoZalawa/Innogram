@@ -1,13 +1,13 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import reportWebVitals from './reportWebVitals';
-import RegisterForm from './Components/Forms/registerForm'
+import React from "react";
+import ReactDOM from "react-dom/client";
+import reportWebVitals from "./reportWebVitals";
+import RegisterForm from "./Components/Forms/registerForm";
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <RegisterForm/>
-  </React.StrictMode>
+    <RegisterForm />
+  </React.StrictMode>,
 );
 
 // If you want to start measuring performance in your app, pass a function
