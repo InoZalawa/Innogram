@@ -30,12 +30,28 @@ app.use(express.urlencoded({ extended: true }));
 // Rate limiting
 app.use(generalRateLimiter);
 
-// Request logging
+// Request logging with response status
 app.use((req: Request, res: Response, next) => {
+  const startTime = Date.now();
+  
+  // Log request
   logger.info(`${req.method} ${req.path}`, {
     ip: req.ip,
     userAgent: req.get('user-agent'),
+    query: Object.keys(req.query).length > 0 ? req.query : undefined,
   });
+
+  // Log response when finished
+  res.on('finish', () => {
+    const duration = Date.now() - startTime;
+    const statusColor = res.statusCode >= 400 ? 'error' : res.statusCode >= 300 ? 'warn' : 'info';
+    logger[statusColor](`${req.method} ${req.path} ${res.statusCode}`, {
+      statusCode: res.statusCode,
+      duration: `${duration}ms`,
+      ip: req.ip,
+    });
+  });
+
   next();
 });
 
