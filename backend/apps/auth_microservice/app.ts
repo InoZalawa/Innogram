@@ -6,7 +6,8 @@ import {
   errorHandler,
   notFoundHandler,
 } from './middleware/errorHandler';
-import { generalRateLimiter } from './middleware/rateLimiter';
+// TODO: Implement rate limiting
+// import { generalRateLimiter } from './middleware/rateLimiter';
 import logger from './utils/logger';
 import { cleanupExpiredTokens } from './services/AuthService';
 

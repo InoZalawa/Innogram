@@ -4,13 +4,13 @@ A secure, production-ready authentication microservice built with Express, TypeS
 
 ## Features
 
-- ✅ User registration with comprehensive validation
+- ✅ User registration
 - ✅ User login with JWT tokens (access + refresh)
 - ✅ Token refresh endpoint
-- ✅ Logout with token blacklisting via Redis
+- ⏳ Logout with token blacklisting via Redis (TODO: To be implemented)
 - ✅ Protected routes with authentication middleware
-- ✅ Rate limiting for auth endpoints (prevents brute force)
-- ✅ Input validation (email, password strength, username)
+- ⏳ Rate limiting for auth endpoints (TODO: To be implemented)
+- ⏳ Input validation (email, password strength, username) (TODO: To be implemented)
 - ✅ CORS configuration
 - ✅ Comprehensive error handling
 - ✅ Structured logging with Winston (console + file)
@@ -30,13 +30,14 @@ A secure, production-ready authentication microservice built with Express, TypeS
 
 - `POST /internal/auth/register` - Register a new user
   - Body: `{ username, email, password, repeatPassword }`
-  - Rate limited: 5 requests per 15 minutes
-  - Validation: Username (3-30 chars), Email (valid format), Password (min 8 chars, uppercase, lowercase, number)
+  - TODO: Add rate limiting (5 requests per 15 minutes recommended)
+  - TODO: Add input validation (Username: 3-30 chars, Email: valid format, Password: min 8 chars with uppercase, lowercase, number)
 
 - `POST /internal/auth/login` - Login user
   - Body: `{ login, password }` (login can be username OR email)
   - Returns: `{ accessToken, refreshToken }`
-  - Rate limited: 5 requests per 15 minutes
+  - TODO: Add rate limiting (5 requests per 15 minutes recommended)
+  - TODO: Add input validation
 
 - `POST /internal/auth/refresh` - Refresh access token
   - Body: `{ refreshToken }`
@@ -44,10 +45,11 @@ A secure, production-ready authentication microservice built with Express, TypeS
 
 ### Protected Endpoints (Require Authentication)
 
-- `POST /internal/auth/logout` - Logout user
+- `POST /internal/auth/logout` - Logout user (TODO: To be implemented)
   - Headers: `Authorization: Bearer <accessToken>`
   - Body: `{ refreshToken }`
-  - Invalidates both tokens (blacklists access token, deletes refresh token)
+  - Currently returns 501 (Not Implemented)
+  - Should invalidate both tokens (blacklist access token, delete refresh token)
 
 - `GET /internal/auth/me` - Get current user info
   - Headers: `Authorization: Bearer <accessToken>`
@@ -170,16 +172,53 @@ npm run docker:up
 
 ## Security Features
 
-1. **Password Hashing**: Uses bcrypt with 12 salt rounds
-2. **JWT Tokens**: Secure token-based authentication with configurable expiry
-3. **Rate Limiting**: 
-   - Auth endpoints: 5 requests per 15 minutes
-   - General endpoints: 100 requests per 15 minutes
-4. **Input Validation**: Comprehensive validation for all inputs
-5. **Token Blacklisting**: Revokes tokens on logout using Redis
-6. **CORS**: Configurable cross-origin resource sharing
-7. **Error Handling**: Prevents information leakage in production
-8. **Request Logging**: Tracks all requests with IP, method, path, and response time
+1. **Password Hashing**: Uses bcrypt with 12 salt rounds ✅
+2. **JWT Tokens**: Secure token-based authentication with configurable expiry ✅
+3. **Rate Limiting**: ⏳ TODO: To be implemented
+   - Auth endpoints: 5 requests per 15 minutes (recommended)
+   - General endpoints: 100 requests per 15 minutes (recommended)
+4. **Input Validation**: ⏳ TODO: To be implemented
+   - Comprehensive validation for all inputs
+5. **Token Blacklisting**: ⏳ TODO: To be implemented
+   - Revokes tokens on logout using Redis
+6. **CORS**: Configurable cross-origin resource sharing ✅
+7. **Error Handling**: Prevents information leakage in production ✅
+8. **Request Logging**: Tracks all requests with IP, method, path, and response time ✅
+
+## TODO: Features to Implement
+
+### 1. Rate Limiting
+- **File**: `middleware/rateLimiter.ts`
+- **Purpose**: Prevent brute force attacks and abuse
+- **Instructions**: See comments in `middleware/rateLimiter.ts` for implementation details
+- **Requirements**:
+  - Implement `authRateLimiter` for login/register endpoints (5 requests per 15 minutes)
+  - Implement `generalRateLimiter` for all endpoints (100 requests per 15 minutes)
+  - Add proper error responses and logging
+  - Uncomment rate limiting in `app.ts` and `controllers/AuthController.ts`
+
+### 2. Input Validation
+- **File**: `utils/validation.ts`
+- **Purpose**: Validate and sanitize user inputs
+- **Instructions**: See comments in `utils/validation.ts` for implementation details
+- **Requirements**:
+  - Validate username (3-30 chars, alphanumeric + underscores)
+  - Validate email (valid email format)
+  - Validate password (min 8 chars, uppercase, lowercase, number)
+  - Validate password match for registration
+  - Use `express-validator` library
+  - Uncomment validation middleware in `controllers/AuthController.ts`
+
+### 3. Logout Functionality
+- **Files**: `services/AuthService.ts`, `controllers/AuthController.ts`
+- **Purpose**: Allow users to securely log out
+- **Instructions**: See comments in both files for implementation details
+- **Requirements**:
+  - Delete refresh token from database
+  - Blacklist access token in Redis
+  - Return appropriate success/error responses
+  - Handle Redis unavailability gracefully
+  - Uncomment logout code in both files
 
 ## Logging
 
@@ -200,7 +239,7 @@ Example log output:
 
 - **Access Tokens**: Short-lived (default: 3 minutes), used for API requests
 - **Refresh Tokens**: Longer-lived (default: 10 minutes), stored in database
-- **Token Blacklisting**: Access tokens are blacklisted in Redis on logout
+- **Token Blacklisting**: ⏳ TODO: Access tokens should be blacklisted in Redis on logout (to be implemented)
 - **Automatic Cleanup**: Expired refresh tokens are cleaned up hourly
 
 ## Testing
