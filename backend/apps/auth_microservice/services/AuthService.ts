@@ -219,39 +219,46 @@ export const refreshAccessToken = async (refreshToken: string) => {
   }
 };
 
-export const logoutUser = async (refreshToken: string, accessToken?: string) => {
-  try {
-    // Delete refresh token from database
-    await prisma.refreshToken.deleteMany({
-      where: { token: refreshToken },
-    });
-
-    // Blacklist access token in Redis if provided
-    if (accessToken) {
-      try {
-        const redisClient = await getRedisClient();
-        const redisRepo = new RedisAuthRepository(redisClient);
-        await redisRepo.blacklistToken(accessToken, ACCESS_TOKEN_EXPIRY);
-      } catch (redisErr) {
-        logger.warn('Redis not available, skipping token blacklist:', redisErr);
-      }
-    }
-
-    logger.info('User logged out successfully');
-    return {
-      success: true,
-      status: 200,
-      message: 'Logout successful',
-    };
-  } catch (err) {
-    logger.error('Logout error:', err);
-    return {
-      success: false,
-      status: 500,
-      message: 'Logout failed. Please try again later.',
-    };
-  }
-};
+// TODO: Implement logout functionality
+// This function should:
+// 1. Delete the refresh token from the database
+// 2. Blacklist the access token in Redis (if provided)
+// 3. Return success response
+// 
+// Example implementation:
+// export const logoutUser = async (refreshToken: string, accessToken?: string) => {
+//   try {
+//     // Delete refresh token from database
+//     await prisma.refreshToken.deleteMany({
+//       where: { token: refreshToken },
+//     });
+//
+//     // Blacklist access token in Redis if provided
+//     if (accessToken) {
+//       try {
+//         const redisClient = await getRedisClient();
+//         const redisRepo = new RedisAuthRepository(redisClient);
+//         await redisRepo.blacklistToken(accessToken, ACCESS_TOKEN_EXPIRY);
+//       } catch (redisErr) {
+//         logger.warn('Redis not available, skipping token blacklist:', redisErr);
+//       }
+//     }
+//
+//     logger.info('User logged out successfully');
+//     return {
+//       success: true,
+//       status: 200,
+//       message: 'Logout successful',
+//     };
+//   } catch (err) {
+//     logger.error('Logout error:', err);
+//     return {
+//       success: false,
+//       status: 500,
+//       message: 'Logout failed. Please try again later.',
+//     };
+//   }
+// };
 
 // Cleanup expired refresh tokens (should be run periodically)
 export const cleanupExpiredTokens = async () => {

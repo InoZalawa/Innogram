@@ -3,26 +3,31 @@ import {
   registerUser,
   logInUser,
   refreshAccessToken,
-  logoutUser,
+  // TODO: Implement logout functionality
+  // logoutUser,
 } from '../services/AuthService';
 import { SignUpDto } from '../DTO/SignUpDTO';
 import { LogInDTO } from '../DTO/LogInDTO';
-import {
-  registerValidation,
-  loginValidation,
-} from '../utils/validation';
-import { validationErrorHandler } from '../middleware/errorHandler';
+// TODO: Implement input validation
+// import {
+//   registerValidation,
+//   loginValidation,
+// } from '../utils/validation';
+// import { validationErrorHandler } from '../middleware/errorHandler';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
-import { authRateLimiter } from '../middleware/rateLimiter';
+// TODO: Implement rate limiting
+// import { authRateLimiter } from '../middleware/rateLimiter';
 import logger from '../utils/logger';
 
 const router = express.Router();
 
 router.post(
   '/internal/auth/register',
-  authRateLimiter,
-  registerValidation,
-  validationErrorHandler,
+  // TODO: Add rate limiting middleware here
+  // authRateLimiter,
+  // TODO: Add input validation middleware here
+  // registerValidation,
+  // validationErrorHandler,
   async (req: Request, res: Response) => {
     const { username, password, repeatPassword, email } = req.body;
 
@@ -46,9 +51,11 @@ router.post(
 
 router.post(
   '/internal/auth/login',
-  authRateLimiter,
-  loginValidation,
-  validationErrorHandler,
+  // TODO: Add rate limiting middleware here
+  // authRateLimiter,
+  // TODO: Add input validation middleware here
+  // loginValidation,
+  // validationErrorHandler,
   async (req: Request, res: Response) => {
     const { login, password } = req.body;
 
@@ -101,34 +108,48 @@ router.post(
   }
 );
 
+// TODO: Implement logout functionality
+// This endpoint should:
+// 1. Accept refreshToken in request body
+// 2. Extract accessToken from Authorization header
+// 3. Delete refresh token from database
+// 4. Blacklist access token in Redis
+// 5. Return success response
 router.post(
   '/internal/auth/logout',
   authenticateToken,
   async (req: AuthRequest, res: Response) => {
-    const { refreshToken } = req.body;
-    const authHeader = req.headers['authorization'];
-    const accessToken = authHeader && authHeader.split(' ')[1];
+    // TODO: Implement logout logic
+    // const { refreshToken } = req.body;
+    // const authHeader = req.headers['authorization'];
+    // const accessToken = authHeader && authHeader.split(' ')[1];
 
-    if (!refreshToken) {
-      return res.status(400).json({
-        success: false,
-        message: 'Refresh token is required',
-      });
-    }
+    // if (!refreshToken) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: 'Refresh token is required',
+    //   });
+    // }
 
-    try {
-      const result = await logoutUser(refreshToken, accessToken);
-      return res.status(result.status || 500).json({
-        success: result.success,
-        message: result.message,
-      });
-    } catch (err) {
-      logger.error('Logout controller error:', err);
-      return res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-      });
-    }
+    // try {
+    //   const result = await logoutUser(refreshToken, accessToken);
+    //   return res.status(result.status || 500).json({
+    //     success: result.success,
+    //     message: result.message,
+    //   });
+    // } catch (err) {
+    //   logger.error('Logout controller error:', err);
+    //   return res.status(500).json({
+    //     success: false,
+    //     message: 'Internal server error',
+    //   });
+    // }
+
+    // Temporary response until logout is implemented
+    return res.status(501).json({
+      success: false,
+      message: 'Logout functionality not yet implemented',
+    });
   }
 );
 

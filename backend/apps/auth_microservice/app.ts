@@ -27,8 +27,10 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting
-app.use(generalRateLimiter);
+// TODO: Implement rate limiting
+// Rate limiting should be added here to prevent abuse
+// Uncomment the line below and implement rate limiting middleware
+// app.use(generalRateLimiter);
 
 // Request logging with response status
 app.use((req: Request, res: Response, next) => {

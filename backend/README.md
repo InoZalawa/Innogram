@@ -9,12 +9,14 @@ This is an Nx monorepo containing:
 ```
 backend/
 ├── apps/
-│   └── auth_microservice/    # Authentication microservice
-├── packages/                  # Shared packages (if any)
-├── docker-compose.yml         # Docker Compose configuration
-├── Dockerfile                 # Backend Docker image
-├── prisma.config.ts           # Prisma 7 configuration
-└── package.json              # Root package.json
+│   ├── auth_microservice/      # Authentication microservice (Express + TypeScript)
+│   ├── posts_microservice/     # Posts microservice (NestJS - to be implemented)
+│   └── following_microservice/ # Following/Followers microservice (NestJS - to be implemented)
+├── packages/                    # Shared packages (if any)
+├── docker-compose.yml           # Docker Compose configuration
+├── Dockerfile                   # Backend Docker image
+├── prisma.config.ts             # Prisma 7 configuration
+└── package.json                # Root package.json
 ```
 
 ## Quick Start
@@ -126,6 +128,7 @@ See `.env.example` for all required variables. Key variables:
 
 ## Technology Stack
 
+### Auth Microservice
 - **Runtime:** Node.js 20
 - **Framework:** Express 5
 - **Language:** TypeScript
@@ -135,6 +138,16 @@ See `.env.example` for all required variables. Key variables:
 - **Authentication:** JWT (jsonwebtoken)
 - **Validation:** express-validator
 - **Logging:** Winston
+
+### Posts & Following Microservices (To Be Implemented)
+- **Framework:** NestJS
+- **Language:** TypeScript
+- **ORM:** Prisma 7 (shared database)
+- **Authentication:** JWT (reuse auth_microservice tokens)
+
+### Shared Infrastructure
+- **Database:** PostgreSQL 16
+- **Cache:** Redis 7
 - **Containerization:** Docker & Docker Compose
 
 ## Prisma 7 Notes
@@ -150,12 +163,14 @@ The `prisma.config.ts` file is already configured. See [apps/auth_microservice/R
 ## Documentation
 
 - **[Auth Microservice README](./apps/auth_microservice/README.md)** - Complete auth service documentation
+- **[Posts Microservice README](./apps/posts_microservice/README.md)** - Posts microservice implementation guide
+- **[Following Microservice README](./apps/following_microservice/README.md)** - Following/Followers microservice implementation guide
 - **[Docker Guide](./README.Docker.md)** - Docker setup and troubleshooting
 - **[Postman Testing Guide](./POSTMAN_TESTING_GUIDE.md)** - API testing instructions
 
 ## Development Workflow
 
-### Making Changes
+### Auth Microservice
 
 1. **Code changes** - Edit files in `apps/auth_microservice/`
 2. **Database changes** - Update `apps/auth_microservice/db/schema.prisma`
@@ -175,6 +190,20 @@ The `prisma.config.ts` file is already configured. See [apps/auth_microservice/R
    ```bash
    npm run docker:rebuild
    ```
+
+### Posts & Following Microservices (NestJS)
+
+These microservices need to be implemented from scratch using NestJS:
+
+1. **Set up NestJS project** in the respective `apps/` folder
+2. **Configure Prisma** to use the same database as auth_microservice
+3. **Implement authentication** using JWT tokens from auth_microservice
+4. **Follow NestJS best practices** (modules, services, controllers, DTOs)
+5. **Reference the README files** in each microservice folder for requirements
+
+See individual README files for detailed implementation guidelines:
+- [Posts Microservice README](./apps/posts_microservice/README.md)
+- [Following Microservice README](./apps/following_microservice/README.md)
 
 ### Code Style
 
