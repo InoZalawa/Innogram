@@ -11,6 +11,7 @@ A secure, production-ready authentication microservice built with Express, TypeS
 - ✅ Protected routes with authentication middleware
 - ⏳ Rate limiting for auth endpoints (TODO: To be implemented)
 - ⏳ Input validation (email, password strength, username) (TODO: To be implemented)
+- ⏳ CORS configuration (TODO: To be implemented)
 - ⏳ Google OAuth sign-in/sign-up (TODO: To be implemented)
 - ✅ CORS configuration
 - ✅ Comprehensive error handling
@@ -187,7 +188,9 @@ npm run docker:up
    - Comprehensive validation for all inputs
 5. **Token Blacklisting**: ⏳ TODO: To be implemented
    - Revokes tokens on logout using Redis
-6. **CORS**: Configurable cross-origin resource sharing ✅
+6. **CORS**: ⏳ TODO: To be implemented
+   - Configurable cross-origin resource sharing
+   - Important for web applications to allow frontend access
 7. **Error Handling**: Prevents information leakage in production ✅
 8. **Request Logging**: Tracks all requests with IP, method, path, and response time ✅
 
@@ -226,7 +229,18 @@ npm run docker:up
   - Handle Redis unavailability gracefully
   - Uncomment logout code in both files
 
-### 4. Google OAuth Authentication
+### 4. CORS Configuration
+- **File**: `app.ts`
+- **Purpose**: Enable cross-origin requests from web applications
+- **Instructions**: See comments in `app.ts` for implementation details
+- **Requirements**:
+  - Install `cors` and `@types/cors`: `npm install cors @types/cors`
+  - Configure CORS options (origin, credentials, etc.)
+  - Add CORS middleware before other middleware
+  - In production, specify exact frontend origins (not `*`)
+  - Uncomment CORS code in `app.ts`
+
+### 5. Google OAuth Authentication
 - **Files**: `services/AuthService.ts`, `controllers/AuthController.ts`
 - **Purpose**: Allow users to sign in/sign up using Google accounts
 - **Instructions**: See comments in both files for implementation details

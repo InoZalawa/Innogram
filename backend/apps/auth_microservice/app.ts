@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import * as dotenv from 'dotenv';
-import cors from 'cors';
+// TODO: Implement CORS
+// import cors from 'cors';
 import AuthController from './controllers/AuthController';
 import {
   errorHandler,
@@ -16,15 +17,22 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// CORS configuration
-const corsOptions = {
-  origin: process.env.CORS_ORIGIN || '*',
-  credentials: true,
-  optionsSuccessStatus: 200,
-};
+// TODO: Implement CORS configuration
+// CORS (Cross-Origin Resource Sharing) is important for web applications
+// Instructions:
+// 1. Install cors: npm install cors @types/cors
+// 2. Configure CORS options based on your frontend origin
+// 3. Add CORS middleware before other middleware
+//
+// Example implementation:
+// const corsOptions = {
+//   origin: process.env.CORS_ORIGIN || '*', // In production, specify exact origins
+//   credentials: true,
+//   optionsSuccessStatus: 200,
+// };
+// app.use(cors(corsOptions));
 
 // Middleware
-app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
