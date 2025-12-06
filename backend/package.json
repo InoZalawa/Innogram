@@ -34,9 +34,11 @@
     "packages/*"
   ],
   "dependencies": {
+    "@prisma/adapter-pg": "^7.1.0",
     "@prisma/client": "^7.0.1",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
+    "dotenv": "^16.4.7",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "passport-jwt": "^4.0.1",

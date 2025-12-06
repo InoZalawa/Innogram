@@ -104,14 +104,12 @@ export const logInUser = async (logInDto: LogInDTO) => {
       };
       const refreshToken = jwt.sign(tokenPayload, TOKEN_KEY, refreshOptions);
 
-      await prisma.$transaction([
-        prisma.refreshToken.create({
-          data: {
-            token: refreshToken,
-            userId: user.id,
-          },
-        }),
-      ]);
+      await prisma.refreshToken.create({
+        data: {
+          token: refreshToken,
+          userId: user.id,
+        },
+      });
 
       return {
         success: true,

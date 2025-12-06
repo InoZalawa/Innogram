@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 
-import { registerUser } from '../services/AuthService';
+import { registerUser, logInUser } from '../services/AuthService';
 
 import { SignUpDto } from '../DTO/SignUpDTO';
 
@@ -26,15 +26,29 @@ router.post('/internal/auth/register', async (req: Request, res: Response) => {
     console.error(err);
     return res
       .status(500)
-      .json({ success: false, message: 'INERNAL SERVER ERROR' });
+      .json({ success: false, message: 'INTERNAL SERVER ERROR' });
   }
 });
 
 router.post('/internal/auth/login', async (req: Request, res: Response) => {
   const { login, password } = req.body;
 
-  const logInDTO = new LogInDTO(login, password);
+  try {
+    const logInDTO = new LogInDTO(login, password);
 
-  const result = LogInUser(logInDTO);
+    const result = await logInUser(logInDTO);
+
+    return res.status(result.status || 500).json({
+      success: result.success,
+      message: result.message,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+    });
+  } catch (err) {
+    console.error(err);
+    return res
+      .status(500)
+      .json({ success: false, message: 'INTERNAL SERVER ERROR' });
+  }
 });
 export default router;
