@@ -260,6 +260,84 @@ export const refreshAccessToken = async (refreshToken: string) => {
 //   }
 // };
 
+// TODO: Implement Google OAuth authentication
+// This function should handle Google OAuth callback and create/login user
+//
+// export const handleGoogleAuth = async (googleProfile: {
+//   id: string;
+//   email: string;
+//   name?: string;
+//   picture?: string;
+// }) => {
+//   try {
+//     // Check if user exists by email
+//     let user = await prisma.user.findUnique({
+//       where: { email: googleProfile.email },
+//     });
+//
+//     // If user doesn't exist, create new user
+//     if (!user) {
+//       // Generate a random password (user won't use it, but required by schema)
+//       const randomPassword = await bcrypt.hash(Math.random().toString(), 12);
+//       user = await prisma.user.create({
+//         data: {
+//           email: googleProfile.email,
+//           username: googleProfile.email.split('@')[0] + '_' + googleProfile.id.slice(0, 6),
+//           password: randomPassword, // User won't use password auth
+//         },
+//       });
+//       logger.info(`New user registered via Google: ${googleProfile.email}`);
+//     }
+//
+//     // Generate JWT tokens (same as regular login)
+//     const tokenPayload = {
+//       userId: user.id,
+//       sub: user.email,
+//     };
+//
+//     const accessToken = jwt.sign(tokenPayload, JWT_KEY, {
+//       issuer: 'innogram-auth-service',
+//       expiresIn: ACCESS_TOKEN_EXPIRY,
+//     });
+//
+//     const refreshToken = jwt.sign(tokenPayload, JWT_KEY, {
+//       issuer: 'innogram-auth-service',
+//       expiresIn: REFRESH_TOKEN_EXPIRY,
+//     });
+//
+//     const expiresAt = new Date();
+//     expiresAt.setSeconds(expiresAt.getSeconds() + REFRESH_TOKEN_EXPIRY);
+//
+//     await prisma.refreshToken.create({
+//       data: {
+//         token: refreshToken,
+//         userId: user.id,
+//         expiresAt,
+//       },
+//     });
+//
+//     return {
+//       success: true,
+//       status: 200,
+//       message: 'Google authentication successful',
+//       accessToken,
+//       refreshToken,
+//       user: {
+//         id: user.id,
+//         email: user.email,
+//         username: user.username,
+//       },
+//     };
+//   } catch (err) {
+//     logger.error('Google auth error:', err);
+//     return {
+//       success: false,
+//       status: 500,
+//       message: 'Google authentication failed',
+//     };
+//   }
+// };
+
 // Cleanup expired refresh tokens (should be run periodically)
 export const cleanupExpiredTokens = async () => {
   try {

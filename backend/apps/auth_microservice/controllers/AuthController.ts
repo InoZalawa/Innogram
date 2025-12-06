@@ -175,4 +175,26 @@ router.get(
   }
 );
 
+// TODO: Implement Google OAuth authentication
+// Google Sign-In/Sign-Up endpoints
+// 
+// This should include:
+// 1. GET /internal/auth/google - Initiate Google OAuth flow (redirect to Google)
+// 2. GET /internal/auth/google/callback - Handle Google OAuth callback
+// 3. POST /internal/auth/google/token - Exchange Google token for JWT tokens
+//
+// Implementation steps:
+// 1. Install passport and passport-google-oauth20: npm install passport passport-google-oauth20 @types/passport @types/passport-google-oauth20
+// 2. Set up Google OAuth credentials in Google Cloud Console
+// 3. Configure environment variables: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL
+// 4. Implement Google OAuth strategy
+// 5. Create or find user based on Google profile
+// 6. Generate JWT tokens (same as regular login)
+// 7. Handle new user registration vs existing user login
+//
+// Example endpoint structure:
+// router.get('/internal/auth/google', /* Google OAuth redirect */);
+// router.get('/internal/auth/google/callback', /* Handle callback, create/login user, redirect with tokens */);
+// router.post('/internal/auth/google/token', /* Exchange Google token for JWT */);
+
 export default router;

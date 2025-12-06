@@ -11,6 +11,7 @@ A secure, production-ready authentication microservice built with Express, TypeS
 - ✅ Protected routes with authentication middleware
 - ⏳ Rate limiting for auth endpoints (TODO: To be implemented)
 - ⏳ Input validation (email, password strength, username) (TODO: To be implemented)
+- ⏳ Google OAuth sign-in/sign-up (TODO: To be implemented)
 - ✅ CORS configuration
 - ✅ Comprehensive error handling
 - ✅ Structured logging with Winston (console + file)
@@ -120,6 +121,11 @@ CORS_ORIGIN=*                  # Or specific origin like http://localhost:3000
 
 # Logging Configuration
 LOG_LEVEL=info                 # debug, info, warn, error
+
+# Google OAuth Configuration (TODO: Required for Google auth implementation)
+# GOOGLE_CLIENT_ID=your_google_client_id
+# GOOGLE_CLIENT_SECRET=your_google_client_secret
+# GOOGLE_CALLBACK_URL=http://localhost:3001/internal/auth/google/callback
 ```
 
 ## Local Development Setup
@@ -219,6 +225,20 @@ npm run docker:up
   - Return appropriate success/error responses
   - Handle Redis unavailability gracefully
   - Uncomment logout code in both files
+
+### 4. Google OAuth Authentication
+- **Files**: `services/AuthService.ts`, `controllers/AuthController.ts`
+- **Purpose**: Allow users to sign in/sign up using Google accounts
+- **Instructions**: See comments in both files for implementation details
+- **Requirements**:
+  - Install `passport` and `passport-google-oauth20`
+  - Set up Google OAuth credentials in Google Cloud Console
+  - Configure environment variables: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL`
+  - Implement Google OAuth strategy
+  - Handle OAuth callback and create/login user
+  - Generate JWT tokens (same as regular login)
+  - Handle new user registration vs existing user login
+  - Uncomment Google auth code in both files
 
 ## Logging
 
