@@ -1,0 +1,71 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: innogram-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_DATABASE:-Innogram}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - innogram-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: innogram-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - innogram-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: innogram-backend
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DB_USER: ${DB_USER:-postgres}
+      DB_HOST: postgres
+      DB_DATABASE: ${DB_DATABASE:-Innogram}
+      DB_PORT: 5432
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_URL: "postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_DATABASE:-Innogram}?schema=public"
+      DATABASE_URL: "postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_DATABASE:-Innogram}?schema=public"
+      JWT_KEY: ${JWT_KEY}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - innogram-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  innogram-network:
+    driver: bridge

@@ -1,8 +1,10 @@
-import { RedisClientType } from 'redis';
+import { createClient } from 'redis';
+
+type RedisClient = ReturnType<typeof createClient>;
 
 export class RedisAuthRepository {
-  private client: RedisClientType;
-  public constructor(redisClient: RedisClientType) {
+  private client: RedisClient;
+  public constructor(redisClient: RedisClient) {
     this.client = redisClient;
   }
 

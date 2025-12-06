@@ -5,7 +5,19 @@
   "scripts": {
     "start": "ts-node -r tsconfig-paths/register --project tsconfig.json apps/auth_microservice/app.ts",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
-    "check-format": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\""
+    "check-format": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "docker:up": "docker-compose up -d --build",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:logs:backend": "docker-compose logs -f backend",
+    "docker:logs:postgres": "docker-compose logs -f postgres",
+    "docker:logs:redis": "docker-compose logs -f redis",
+    "docker:ps": "docker-compose ps",
+    "docker:restart": "docker-compose restart",
+    "docker:stop": "docker-compose stop",
+    "docker:start": "docker-compose start",
+    "docker:clean": "docker-compose down -v",
+    "docker:rebuild": "docker-compose build --no-cache backend && docker-compose up -d"
   },
   "private": true,
   "devDependencies": {
@@ -38,13 +50,17 @@
     "@prisma/client": "^7.0.1",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
+    "express-rate-limit": "^7.4.1",
+    "express-validator": "^7.2.0",
     "jsonwebtoken": "^9.0.2",
     "passport-jwt": "^4.0.1",
     "pg": "^8.16.3",
     "prisma": "^7.1.0",
     "redis": "^5.10.0",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "winston": "^3.15.0"
   }
 }

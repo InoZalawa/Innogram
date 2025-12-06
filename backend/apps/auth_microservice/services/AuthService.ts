@@ -1,75 +1,83 @@
 import bcrypt from 'bcrypt';
-
 import * as env from 'dotenv';
-
 import jwt from 'jsonwebtoken';
-
 import { SignUpDto } from '../DTO/SignUpDTO';
-
 import { LogInDTO } from '../DTO/LogInDTO';
-
 import prisma from '../db/prismaClient';
-
-//import { Prisma } from '@prisma/client';
+import logger from '../utils/logger';
+import { getRedisClient } from '../utils/redisClient';
+import { RedisAuthRepository } from '../DTO/RedisRepository';
 
 env.config();
 
+const JWT_KEY = process.env.JWT_KEY;
+if (!JWT_KEY) {
+  throw new Error('JWT_KEY environment variable is not set');
+}
+
+const ACCESS_TOKEN_EXPIRY = parseInt(process.env.ACCESS_TOKEN_EXPIRY || '180', 10); // 3 minutes default
+const REFRESH_TOKEN_EXPIRY = parseInt(process.env.REFRESH_TOKEN_EXPIRY || '600', 10); // 10 minutes default
+
 export const registerUser = async (signUpDto: SignUpDto) => {
-  let result = {
-    success: false,
-    status: 500,
-    message: 'INTERNAL SERVER ERROR',
-  };
-
-  if (signUpDto.password !== signUpDto.repeatPassword) {
-    console.log('PASSWORDS ARENT MATCHING');
-    return {
-      success: false,
-      status: 400,
-      message: 'PASSWORDS ARE NOT THE SAME',
-    };
-  }
-
   try {
-    await prisma.$transaction(async (tx: any) => {
+    // Validate password match
+    if (signUpDto.password !== signUpDto.repeatPassword) {
+      logger.warn('Registration failed: passwords do not match');
+      return {
+        success: false,
+        status: 400,
+        message: 'Passwords do not match',
+      };
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
       const encryptedPassword = await bcrypt.hash(signUpDto.password, 12);
 
-      const isUserUnique = await tx.user.findFirst({
+      // Check if user already exists
+      const existingUser = await tx.user.findFirst({
         where: {
           OR: [{ email: signUpDto.email }, { username: signUpDto.username }],
         },
       });
 
-      if (!isUserUnique) {
-        await tx.user.create({
-          data: {
-            username: signUpDto.username,
-            password: encryptedPassword,
-            email: signUpDto.email,
-          },
-        });
-
-        console.log('NEW USER REGISTERED');
-        result = { success: true, status: 201, message: 'SUCCESS' };
-      } else {
-        console.log('USER ALREADY EXISTS');
-        result = { success: false, status: 409, message: 'USER IS NOT UNIQUE' };
+      if (existingUser) {
+        logger.warn(`Registration failed: user already exists - ${signUpDto.email}`);
+        return {
+          success: false,
+          status: 409,
+          message: 'User with this email or username already exists',
+        };
       }
+
+      // Create new user
+      await tx.user.create({
+        data: {
+          username: signUpDto.username,
+          password: encryptedPassword,
+          email: signUpDto.email,
+        },
+      });
+
+      logger.info(`New user registered: ${signUpDto.email}`);
+      return {
+        success: true,
+        status: 201,
+        message: 'User registered successfully',
+      };
     });
-  } catch (err) {
-    console.error('REGISTRATION ERROR:', err);
-    result = { success: false, status: 500, message: 'DB ERROR' };
-  } finally {
+
     return result;
+  } catch (err) {
+    logger.error('Registration error:', err);
+    return {
+      success: false,
+      status: 500,
+      message: 'Registration failed. Please try again later.',
+    };
   }
 };
 
 export const logInUser = async (logInDto: LogInDTO) => {
-  const TOKEN_KEY = process.env.JWT_KEY;
-  if (!TOKEN_KEY) {
-    throw new Error('wrong JWT KEY');
-  }
-
   try {
     const user = await prisma.user.findFirst({
       where: {
@@ -78,7 +86,12 @@ export const logInUser = async (logInDto: LogInDTO) => {
     });
 
     if (!user) {
-      return { success: false, status: 401, message: 'WRONG LOGIN/PASSWORD' };
+      logger.warn(`Login failed: user not found - ${logInDto.login}`);
+      return {
+        success: false,
+        status: 401,
+        message: 'Invalid credentials',
+      };
     }
 
     const arePasswordsMatching = await bcrypt.compare(
@@ -86,43 +99,175 @@ export const logInUser = async (logInDto: LogInDTO) => {
       user.password
     );
 
-    if (arePasswordsMatching) {
-      const tokenPayload = {
-        userId: user.id,
-        sub: user.email,
-      };
-
-      const accessOptions = {
-        issuer: 'innogram-auth-service',
-        expiresIn: 60 * 3, // 3 minutes
-      };
-      const accessToken = jwt.sign(tokenPayload, TOKEN_KEY, accessOptions);
-
-      const refreshOptions = {
-        issuer: 'innogram-auth-service',
-        expiresIn: 60 * 10, // 10 minutes
-      };
-      const refreshToken = jwt.sign(tokenPayload, TOKEN_KEY, refreshOptions);
-
-      await prisma.refreshToken.create({
-        data: {
-          token: refreshToken,
-          userId: user.id,
-        },
-      });
-
+    if (!arePasswordsMatching) {
+      logger.warn(`Login failed: invalid password for user - ${user.email}`);
       return {
-        success: true,
-        status: 200,
-        message: 'SUCCESS: USER LOGGED IN',
-        accessToken: accessToken,
-        refreshToken: refreshToken,
+        success: false,
+        status: 401,
+        message: 'Invalid credentials',
       };
-    } else {
-      return { success: false, status: 401, message: 'WRONG LOGIN/PASSWORD' };
     }
+
+    const tokenPayload = {
+      userId: user.id,
+      sub: user.email,
+    };
+
+    const accessToken = jwt.sign(tokenPayload, JWT_KEY, {
+      issuer: 'innogram-auth-service',
+      expiresIn: ACCESS_TOKEN_EXPIRY,
+    });
+
+    const refreshToken = jwt.sign(tokenPayload, JWT_KEY, {
+      issuer: 'innogram-auth-service',
+      expiresIn: REFRESH_TOKEN_EXPIRY,
+    });
+
+    const expiresAt = new Date();
+    expiresAt.setSeconds(expiresAt.getSeconds() + REFRESH_TOKEN_EXPIRY);
+
+    await prisma.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
+    logger.info(`User logged in successfully: ${user.email}`);
+
+    return {
+      success: true,
+      status: 200,
+      message: 'Login successful',
+      accessToken,
+      refreshToken,
+    };
   } catch (err) {
-    console.error('LOG IN ERROR:', err);
-    return { success: false, status: 500, message: 'DB ERROR' };
+    logger.error('Login error:', err);
+    return {
+      success: false,
+      status: 500,
+      message: 'Login failed. Please try again later.',
+    };
+  }
+};
+
+export const refreshAccessToken = async (refreshToken: string) => {
+  try {
+    // Verify refresh token
+    const decoded = jwt.verify(refreshToken, JWT_KEY) as {
+      userId: number;
+      sub: string;
+    };
+
+    // Check if token exists in database
+    const tokenRecord = await prisma.refreshToken.findUnique({
+      where: { token: refreshToken },
+      include: { user: true },
+    });
+
+    if (!tokenRecord) {
+      logger.warn('Refresh token not found in database');
+      return {
+        success: false,
+        status: 401,
+        message: 'Invalid refresh token',
+      };
+    }
+
+    // Check if token is expired
+    if (new Date() > tokenRecord.expiresAt) {
+      // Clean up expired token
+      await prisma.refreshToken.delete({
+        where: { token: refreshToken },
+      });
+      logger.warn('Refresh token expired');
+      return {
+        success: false,
+        status: 401,
+        message: 'Refresh token expired',
+      };
+    }
+
+    // Generate new access token
+    const tokenPayload = {
+      userId: decoded.userId,
+      sub: decoded.sub,
+    };
+
+    const accessToken = jwt.sign(tokenPayload, JWT_KEY, {
+      issuer: 'innogram-auth-service',
+      expiresIn: ACCESS_TOKEN_EXPIRY,
+    });
+
+    logger.info(`Access token refreshed for user: ${decoded.sub}`);
+
+    return {
+      success: true,
+      status: 200,
+      message: 'Token refreshed successfully',
+      accessToken,
+    };
+  } catch (err) {
+    logger.error('Token refresh error:', err);
+    return {
+      success: false,
+      status: 401,
+      message: 'Invalid or expired refresh token',
+    };
+  }
+};
+
+export const logoutUser = async (refreshToken: string, accessToken?: string) => {
+  try {
+    // Delete refresh token from database
+    await prisma.refreshToken.deleteMany({
+      where: { token: refreshToken },
+    });
+
+    // Blacklist access token in Redis if provided
+    if (accessToken) {
+      try {
+        const redisClient = await getRedisClient();
+        const redisRepo = new RedisAuthRepository(redisClient);
+        await redisRepo.blacklistToken(accessToken, ACCESS_TOKEN_EXPIRY);
+      } catch (redisErr) {
+        logger.warn('Redis not available, skipping token blacklist:', redisErr);
+      }
+    }
+
+    logger.info('User logged out successfully');
+    return {
+      success: true,
+      status: 200,
+      message: 'Logout successful',
+    };
+  } catch (err) {
+    logger.error('Logout error:', err);
+    return {
+      success: false,
+      status: 500,
+      message: 'Logout failed. Please try again later.',
+    };
+  }
+};
+
+// Cleanup expired refresh tokens (should be run periodically)
+export const cleanupExpiredTokens = async () => {
+  try {
+    const result = await prisma.refreshToken.deleteMany({
+      where: {
+        expiresAt: {
+          lt: new Date(),
+        },
+      },
+    });
+
+    logger.info(`Cleaned up ${result.count} expired refresh tokens`);
+    return result.count;
+  } catch (err) {
+    logger.error('Token cleanup error:', err);
+    throw err;
   }
 };

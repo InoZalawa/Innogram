@@ -1,0 +1,54 @@
+# Use Node.js LTS version
+FROM node:20-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Generate Prisma Client
+FROM deps AS prisma
+COPY apps/auth_microservice/db/schema.prisma ./apps/auth_microservice/db/
+COPY tsconfig.json tsconfig.base.json ./
+RUN npx prisma generate --schema=./apps/auth_microservice/db/schema.prisma
+
+# Build the application
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=prisma /app/node_modules/.prisma ./node_modules/.prisma
+COPY . .
+
+# Build TypeScript (if needed for production)
+# For now, we'll run with ts-node in development mode
+# You can add a build step here if you want to compile to JavaScript
+
+# Production image
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Create a non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nodejs
+
+# Copy necessary files
+COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=prisma --chown=nodejs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --chown=nodejs:nodejs package.json ./
+COPY --chown=nodejs:nodejs tsconfig.json tsconfig.base.json ./
+COPY --chown=nodejs:nodejs apps ./apps
+
+# Copy and set up startup script
+COPY --chown=nodejs:nodejs start.sh ./
+RUN chmod +x start.sh
+
+USER nodejs
+
+EXPOSE 3001
+
+CMD ["./start.sh"]
