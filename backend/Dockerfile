@@ -41,14 +41,16 @@ COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=prisma --chown=nodejs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --chown=nodejs:nodejs package.json ./
 COPY --chown=nodejs:nodejs tsconfig.json tsconfig.base.json ./
+COPY --chown=nodejs:nodejs prisma.config.ts ./
 COPY --chown=nodejs:nodejs apps ./apps
 
 # Copy and set up startup script
-COPY --chown=nodejs:nodejs start.sh ./
-RUN chmod +x start.sh
+COPY --chown=nodejs:nodejs start.sh /app/start.sh
+RUN sed -i 's/\r$//' /app/start.sh && \
+    chmod +x /app/start.sh
 
 USER nodejs
 
 EXPOSE 3001
 
-CMD ["./start.sh"]
+CMD ["/bin/sh", "/app/start.sh"]

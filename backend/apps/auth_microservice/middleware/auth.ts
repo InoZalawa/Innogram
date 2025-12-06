@@ -59,7 +59,7 @@ export const authenticateToken = async (
 
     req.userId = decoded.userId;
     req.userEmail = decoded.sub;
-    next();
+    return next();
   } catch (err) {
     logger.warn('Invalid token:', err);
     return res.status(403).json({

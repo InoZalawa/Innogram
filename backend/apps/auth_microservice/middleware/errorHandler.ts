@@ -45,7 +45,7 @@ export const validationErrorHandler = (
       errors: errors.array(),
     });
   }
-  next();
+  return next();
 };
 
 export const notFoundHandler = (
