@@ -11,7 +11,6 @@ export const errorHandler = (
   err: ApiError,
   req: Request,
   res: Response,
-  next: NextFunction
 ) => {
   const statusCode = err.statusCode || err.status || 500;
   const message = err.message || 'Internal Server Error';
@@ -38,6 +37,7 @@ export const validationErrorHandler = (
   next: NextFunction
 ) => {
   const errors = validationResult(req);
+
   if (!errors.isEmpty()) {
     return res.status(400).json({
       success: false,
@@ -45,13 +45,13 @@ export const validationErrorHandler = (
       errors: errors.array(),
     });
   }
+
   return next();
 };
 
 export const notFoundHandler = (
   req: Request,
   res: Response,
-  next: NextFunction
 ) => {
   res.status(404).json({
     success: false,

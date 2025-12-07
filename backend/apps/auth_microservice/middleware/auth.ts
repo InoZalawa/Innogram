@@ -32,6 +32,7 @@ export const authenticateToken = async (
     
     if (isBlacklisted) {
       logger.warn('Blacklisted token attempt');
+      
       return res.status(403).json({
         success: false,
         message: 'Token has been revoked',
@@ -59,6 +60,7 @@ export const authenticateToken = async (
 
     req.userId = decoded.userId;
     req.userEmail = decoded.sub;
+
     return next();
   } catch (err) {
     logger.warn('Invalid token:', err);

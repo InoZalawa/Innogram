@@ -10,9 +10,11 @@ export class RedisAuthRepository {
 
   async isTokenBlacklisted(token: string) {
     const result = await this.client.get(`blacklist:${token}`);
+
     if (result !== null) {
       return true;
     }
+    
     return false;
   }
 
@@ -29,10 +31,12 @@ export class RedisAuthRepository {
 
   async findSessionByTokenId(tokenId: string): Promise<string | null> {
     const userId = await this.client.get(`rt:${tokenId}`);
+
     if (userId) {
       await this.client.del(`rt:${tokenId}`);
       return userId;
     }
+
     return null;
   }
 }

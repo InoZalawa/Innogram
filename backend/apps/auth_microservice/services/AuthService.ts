@@ -5,8 +5,6 @@ import { SignUpDto } from '../DTO/SignUpDTO';
 import { LogInDTO } from '../DTO/LogInDTO';
 import prisma from '../db/prismaClient';
 import logger from '../utils/logger';
-import { getRedisClient } from '../utils/redisClient';
-import { RedisAuthRepository } from '../DTO/RedisRepository';
 
 env.config();
 
@@ -164,7 +162,6 @@ export const refreshAccessToken = async (refreshToken: string) => {
     // Check if token exists in database
     const tokenRecord = await prisma.refreshToken.findUnique({
       where: { token: refreshToken },
-      include: { user: true },
     });
 
     if (!tokenRecord) {
