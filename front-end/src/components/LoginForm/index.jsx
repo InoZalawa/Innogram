@@ -16,19 +16,21 @@ const LoginForm = () => {
       <h2>Log in!</h2>
       <form onSubmit={handleSubmit} noValidate>
         <Input
-          inputName="Username/Email"
-          inputType="text"
-          stateValue={identifier}
-          setStateValue={setIdentifier}
-          errorsArr={[]}
+          label="Username/Email"
+          name="identifier"
+          type="text"
+          value={identifier}
+          onChange={(e) => setIdentifier(e.target.value)}
+          errors={[]}
           required
         />
         <Input
-          inputName="Password"
-          inputType="password"
-          stateValue={password}
-          setStateValue={setPassword}
-          errorsArr={[]}
+          label="Password"
+          name="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          errors={[]}
           required
         />
         <button type="submit">Submit</button>

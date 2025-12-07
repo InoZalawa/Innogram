@@ -96,38 +96,42 @@ const RegisterForm = () => {
       <h2>Sign up!</h2>
       <form onSubmit={handleSubmit} noValidate>
         <Input
-          inputName="Username"
-          inputType="text"
-          stateValue={username}
-          setStateValue={setUsername}
-          errorsArr={usernameError}
+          label="Username"
+          name="username"
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          errors={usernameError}
           required
         />
 
         <Input
-          inputName="Email"
-          inputType="email"
-          stateValue={mail}
-          setStateValue={setMail}
-          errorsArr={mailError}
+          label="Email"
+          name="email"
+          type="email"
+          value={mail}
+          onChange={(e) => setMail(e.target.value)}
+          errors={mailError}
           required
         />
 
         <Input
-          inputName="Password"
-          inputType="password"
-          stateValue={password}
-          setStateValue={setPassword}
-          errorsArr={passwordErrors}
+          label="Password"
+          name="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          errors={passwordErrors}
           required
         />
 
         <Input
-          inputName="Repeat password"
-          inputType="password"
-          stateValue={repeatPassword}
-          setStateValue={setRepeatPassword}
-          errorsArr={repeatedPasswordError}
+          label="Repeat password"
+          name="repeat-password"
+          type="password"
+          value={repeatPassword}
+          onChange={(e) => setRepeatPassword(e.target.value)}
+          errors={repeatedPasswordError}
           required
         />
 
