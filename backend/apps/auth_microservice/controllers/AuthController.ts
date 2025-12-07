@@ -18,6 +18,7 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 // TODO: Implement rate limiting
 // import { authRateLimiter } from '../middleware/rateLimiter';
 import logger from '../utils/logger';
+import prisma from '../db/prismaClient';
 
 const router = express.Router();
 
@@ -48,6 +49,28 @@ router.post(
     }
   }
 );
+
+// Public endpoint to inspect user list/count for testing only
+router.get('/internal/auth/users', async (_req: Request, res: Response) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, username: true, email: true },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'User list for verification',
+      count: users.length,
+      users,
+    });
+  } catch (err) {
+    logger.error('Fetch users error:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+});
 
 router.post(
   '/internal/auth/login',

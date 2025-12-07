@@ -72,7 +72,33 @@ Content-Type: application/json
 
 ---
 
-## 3. Login
+## 3. List Users (Testing Only)
+
+**GET** `/internal/auth/users`
+
+**Headers:** None
+
+**Purpose:** Open endpoint to quickly check current user count and list. Use only for local testing and remove/lock down before production.
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "User list for verification",
+  "count": 1,
+  "users": [
+    {
+      "id": 1,
+      "username": "testuser",
+      "email": "test@example.com"
+    }
+  ]
+}
+```
+
+---
+
+## 4. Login
 
 **POST** `/internal/auth/login`
 
@@ -109,7 +135,7 @@ Content-Type: application/json
 
 ---
 
-## 4. Get Current User Info (Protected)
+## 5. Get Current User Info (Protected)
 
 **GET** `/internal/auth/me`
 
@@ -141,7 +167,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 ---
 
-## 5. Refresh Access Token
+## 6. Refresh Access Token
 
 **POST** `/internal/auth/refresh`
 
@@ -174,7 +200,7 @@ Content-Type: application/json
 
 ---
 
-## 6. Logout
+## 7. Logout
 
 **POST** `/internal/auth/logout`
 
@@ -296,6 +322,11 @@ curl -X GET http://localhost:3001/internal/auth/me \
 curl -X POST http://localhost:3001/internal/auth/refresh \
   -H "Content-Type: application/json" \
   -d '{"refreshToken":"YOUR_REFRESH_TOKEN"}'
+```
+
+### List Users (Testing Only)
+```bash
+curl -X GET http://localhost:3001/internal/auth/users
 ```
 
 ### Logout
