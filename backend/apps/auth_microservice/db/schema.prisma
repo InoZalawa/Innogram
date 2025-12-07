@@ -1,5 +1,9 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
-  provider = "postgresql" 
+  provider = "postgresql"
 }
 
 model User {
@@ -13,5 +17,6 @@ model User {
 model RefreshToken {
   token           String         @id
   userId          Int
+  expiresAt       DateTime
   user            User           @relation(fields: [userId], references: [id])
 }

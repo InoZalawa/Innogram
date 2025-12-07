@@ -1,16 +1,20 @@
-import { RedisClientType } from 'redis';
+import { createClient } from 'redis';
+
+type RedisClient = ReturnType<typeof createClient>;
 
 export class RedisAuthRepository {
-  private client: RedisClientType;
-  public constructor(redisClient: RedisClientType) {
+  private client: RedisClient;
+  public constructor(redisClient: RedisClient) {
     this.client = redisClient;
   }
 
   async isTokenBlacklisted(token: string) {
     const result = await this.client.get(`blacklist:${token}`);
+
     if (result !== null) {
       return true;
     }
+    
     return false;
   }
 
@@ -27,10 +31,12 @@ export class RedisAuthRepository {
 
   async findSessionByTokenId(tokenId: string): Promise<string | null> {
     const userId = await this.client.get(`rt:${tokenId}`);
+
     if (userId) {
       await this.client.del(`rt:${tokenId}`);
       return userId;
     }
+
     return null;
   }
 }
