@@ -5,6 +5,9 @@ import { SignUpDto } from '../DTO/SignUpDTO';
 import { LogInDTO } from '../DTO/LogInDTO';
 import prisma from '../db/prismaClient';
 import logger from '../utils/logger';
+import { Prisma, RefreshToken } from '@prisma/client';
+import RedisAuth from '../DTO/RedisRepository';
+import {Strategy as GoogleStrategy} from 'passport-google-oauth20';
 
 env.config();
 
@@ -215,126 +218,212 @@ export const refreshAccessToken = async (refreshToken: string) => {
     };
   }
 };
+/*
+TODO: Implement logout functionality
+This function should:
+1. Delete the refresh token from the database
+2. Blacklist the access token in Redis (if provided)
+3. Return success response
+ */
+/*
+Example implementation:
+export const logoutUser = async (refreshToken: string, accessToken?: string) => {
+  try {
+    // Delete refresh token from database
+    await prisma.refreshToken.deleteMany({
+      where: { token: refreshToken },
+    });
 
-// TODO: Implement logout functionality
-// This function should:
-// 1. Delete the refresh token from the database
-// 2. Blacklist the access token in Redis (if provided)
-// 3. Return success response
-// 
-// Example implementation:
-// export const logoutUser = async (refreshToken: string, accessToken?: string) => {
-//   try {
-//     // Delete refresh token from database
-//     await prisma.refreshToken.deleteMany({
-//       where: { token: refreshToken },
-//     });
-//
-//     // Blacklist access token in Redis if provided
-//     if (accessToken) {
-//       try {
-//         const redisClient = await getRedisClient();
-//         const redisRepo = new RedisAuthRepository(redisClient);
-//         await redisRepo.blacklistToken(accessToken, ACCESS_TOKEN_EXPIRY);
-//       } catch (redisErr) {
-//         logger.warn('Redis not available, skipping token blacklist:', redisErr);
-//       }
-//     }
-//
-//     logger.info('User logged out successfully');
-//     return {
-//       success: true,
-//       status: 200,
-//       message: 'Logout successful',
-//     };
-//   } catch (err) {
-//     logger.error('Logout error:', err);
-//     return {
-//       success: false,
-//       status: 500,
-//       message: 'Logout failed. Please try again later.',
-//     };
-//   }
-// };
+    // Blacklist access token in Redis if provided
+    if (accessToken) {
+      try {
+        const redisClient = await getRedisClient();
+        const redisRepo = new RedisAuthRepository(redisClient);
+        await redisRepo.blacklistToken(accessToken, ACCESS_TOKEN_EXPIRY);
+      } catch (redisErr) {
+        logger.warn('Redis not available, skipping token blacklist:', redisErr);
+      }
+    }
 
-// TODO: Implement Google OAuth authentication
-// This function should handle Google OAuth callback and create/login user
-//
-// export const handleGoogleAuth = async (googleProfile: {
-//   id: string;
-//   email: string;
-//   name?: string;
-//   picture?: string;
-// }) => {
-//   try {
-//     // Check if user exists by email
-//     let user = await prisma.user.findUnique({
-//       where: { email: googleProfile.email },
-//     });
-//
-//     // If user doesn't exist, create new user
-//     if (!user) {
-//       // Generate a random password (user won't use it, but required by schema)
-//       const randomPassword = await bcrypt.hash(Math.random().toString(), 12);
-//       user = await prisma.user.create({
-//         data: {
-//           email: googleProfile.email,
-//           username: googleProfile.email.split('@')[0] + '_' + googleProfile.id.slice(0, 6),
-//           password: randomPassword, // User won't use password auth
-//         },
-//       });
-//       logger.info(`New user registered via Google: ${googleProfile.email}`);
-//     }
-//
-//     // Generate JWT tokens (same as regular login)
-//     const tokenPayload = {
-//       userId: user.id,
-//       sub: user.email,
-//     };
-//
-//     const accessToken = jwt.sign(tokenPayload, JWT_KEY, {
-//       issuer: 'innogram-auth-service',
-//       expiresIn: ACCESS_TOKEN_EXPIRY,
-//     });
-//
-//     const refreshToken = jwt.sign(tokenPayload, JWT_KEY, {
-//       issuer: 'innogram-auth-service',
-//       expiresIn: REFRESH_TOKEN_EXPIRY,
-//     });
-//
-//     const expiresAt = new Date();
-//     expiresAt.setSeconds(expiresAt.getSeconds() + REFRESH_TOKEN_EXPIRY);
-//
-//     await prisma.refreshToken.create({
-//       data: {
-//         token: refreshToken,
-//         userId: user.id,
-//         expiresAt,
-//       },
-//     });
-//
-//     return {
-//       success: true,
-//       status: 200,
-//       message: 'Google authentication successful',
-//       accessToken,
-//       refreshToken,
-//       user: {
-//         id: user.id,
-//         email: user.email,
-//         username: user.username,
-//       },
-//     };
-//   } catch (err) {
-//     logger.error('Google auth error:', err);
-//     return {
-//       success: false,
-//       status: 500,
-//       message: 'Google authentication failed',
-//     };
-//   }
-// };
+    logger.info('User logged out successfully');
+    return {
+      success: true,
+      status: 200,
+      message: 'Logout successful',
+    };
+  } catch (err) {
+    logger.error('Logout error:', err);
+    return {
+      success: false,
+      status: 500,
+      message: 'Logout failed. Please try again later.',
+    };
+  }
+};
+ */
 
+export const LogOffUser = async(refreshToken: string, accessToken?: string) =>{
+  try{
+    await prisma.refreshToken.delete({
+        where: {token : refreshToken}
+      }
+    )
+    if(accessToken){
+      try{
+        const redisClient = RedisAuth; 
+        redisClient.blacklistToken(accessToken,ACCESS_TOKEN_EXPIRY);
+      }
+      catch(err){
+        console.error(err)
+        console.log("ERROR OCCURED, REDIS PART SKIPPED")
+      }
+       
+    }
+    return {success: true, code: 200, message: "user logged out succsessfully"};
+  }
+  catch(err){
+    console.error(err);
+    return {success: false, code: 200, message: "error occured, unable to log out user"};
+  }
+}
+/*
+TODO: Implement Google OAuth authentication
+This function should handle Google OAuth callback and create/login user
+*/
+/*
+export const handleGoogleAuth = async (googleProfile: {
+  id: string;
+  email: string;
+  name?: string;
+  picture?: string;
+}) => {
+  try {
+    // Check if user exists by email
+    let user = await prisma.user.findUnique({
+      where: { email: googleProfile.email },
+    });
+
+    // If user doesn't exist, create new user
+    if (!user) {
+      // Generate a random password (user won't use it, but required by schema)
+      const randomPassword = await bcrypt.hash(Math.random().toString(), 12);
+      user = await prisma.user.create({
+        data: {
+          email: googleProfile.email,
+          username: googleProfile.email.split('@')[0] + '_' + googleProfile.id.slice(0, 6),
+          password: randomPassword, // User won't use password auth
+        },
+      });
+      logger.info(`New user registered via Google: ${googleProfile.email}`);
+    }
+
+    // Generate JWT tokens (same as regular login)
+    const tokenPayload = {
+      userId: user.id,
+      sub: user.email,
+    };
+
+    const accessToken = jwt.sign(tokenPayload, JWT_KEY, {
+      issuer: 'innogram-auth-service',
+      expiresIn: ACCESS_TOKEN_EXPIRY,
+    });
+
+    const refreshToken = jwt.sign(tokenPayload, JWT_KEY, {
+      issuer: 'innogram-auth-service',
+      expiresIn: REFRESH_TOKEN_EXPIRY,
+    });
+
+    const expiresAt = new Date();
+    expiresAt.setSeconds(expiresAt.getSeconds() + REFRESH_TOKEN_EXPIRY);
+
+    await prisma.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
+    return {
+      success: true,
+      status: 200,
+      message: 'Google authentication successful',
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+      },
+    };
+  } catch (err) {
+    logger.error('Google auth error:', err);
+    return {
+      success: false,
+      status: 500,
+      message: 'Google authentication failed',
+    };
+  }
+};
+*/
+export const handleGoogleAuth = async(googleProfile: {
+  id: number;
+  gmail: string;}) => {
+  try{
+    const user = await prisma.user.findUnique({where: {email:googleProfile.gmail}});
+    if(!user){
+      const newRandomPassowrd = await bcrypt.hash(Math.random().toString(), 12);
+      user = await prisma.user.create({
+        data:{
+          email: googleProfile.gmail,
+          password: newRandomPassowrd,
+          username: googleProfile.gmail.split('@')[0] + '_' + googleProfile.id.slice(0, 6)
+        }
+      })
+    }
+        const tokenPayload = {
+      userId: user.id,
+      sub: user.email,
+    };
+
+    const accessToken = jwt.sign(tokenPayload, JWT_KEY, {
+      issuer: 'innogram-auth-service',
+      expiresIn: ACCESS_TOKEN_EXPIRY,
+    });
+
+    const refreshToken = jwt.sign(tokenPayload, JWT_KEY, {
+      issuer: 'innogram-auth-service',
+      expiresIn: REFRESH_TOKEN_EXPIRY,
+    });
+
+    const expiresAt = new Date();
+    expiresAt.setSeconds(expiresAt.getSeconds() + REFRESH_TOKEN_EXPIRY);
+
+    await prisma.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+    return {
+      success: true,
+      status: 200,
+      message: 'Google authentication successful',
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+      },
+    };
+  }
+  catch(err){
+    console.error(err)
+    return {success: false, code: 200, message: "error occured, unable to log in with Google"};
+  }
+}
 // Cleanup expired refresh tokens (should be run periodically)
 export const cleanupExpiredTokens = async () => {
   try {

@@ -3,8 +3,7 @@ import {
   registerUser,
   logInUser,
   refreshAccessToken,
-  // TODO: Implement logout functionality
-  // logoutUser,
+  LogOffUser,
 } from '../services/AuthService';
 import { SignUpDto } from '../DTO/SignUpDTO';
 import { LogInDTO } from '../DTO/LogInDTO';
@@ -142,32 +141,58 @@ router.post(
   '/internal/auth/logout',
   authenticateToken,
   async (req: AuthRequest, res: Response) => {
-    // TODO: Implement logout logic
-    // const { refreshToken } = req.body;
-    // const authHeader = req.headers['authorization'];
-    // const accessToken = authHeader && authHeader.split(' ')[1];
+    /*
+    TODO: Implement logout logic
+    const { refreshToken } = req.body;
+    const authHeader = req.headers['authorization'];
+    const accessToken = authHeader && authHeader.split(' ')[1];
 
-    // if (!refreshToken) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: 'Refresh token is required',
-    //   });
-    // }
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Refresh token is required',
+      });
+    }
 
-    // try {
-    //   const result = await logoutUser(refreshToken, accessToken);
-    //   return res.status(result.status || 500).json({
-    //     success: result.success,
-    //     message: result.message,
-    //   });
-    // } catch (err) {
-    //   logger.error('Logout controller error:', err);
-    //   return res.status(500).json({
-    //     success: false,
-    //     message: 'Internal server error',
-    //   });
-    // }
-
+    try {
+      const result = await logoutUser(refreshToken, accessToken);
+      return res.status(result.status || 500).json({
+        success: result.success,
+        message: result.message,
+      });
+    } catch (err) {
+      logger.error('Logout controller error:', err);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+      });
+    }
+    */
+    const refreshToken = req.body;
+    const authHeader = req.headers['authorization'];
+    const accessToken = authHeader && authHeader.split(' ')[1];
+    if(!refreshToken){
+      return res.status(500).json({
+        success: false,
+        message: "Refersh Tokken is not valid or lacking"
+      })
+    }
+    try{
+      const result = await LogOffUser(refreshToken, accessToken);
+      logger.info("Logged of succesfully");
+      return res.status(result.code || 500).json({
+        success: result.success,
+        message: result.message,
+      })
+    }
+    catch(err){
+      logger.error(err);
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error"
+      })
+    }
+    
     // Temporary response until logout is implemented
     return res.status(501).json({
       success: false,

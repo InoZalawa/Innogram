@@ -40,3 +40,8 @@ export class RedisAuthRepository {
     return null;
   }
 }
+
+const redisClient = createClient();
+const RedisAuthInstance = new RedisAuthRepository(redisClient);
+
+export default RedisAuthInstance as RedisAuthRepository;
