@@ -3,7 +3,8 @@ import {
   registerUser,
   logInUser,
   refreshAccessToken,
-  LogOffUser,
+  handleLogout,
+  handleGoogleAuth,
 } from '../services/AuthService';
 import { SignUpDto } from '../DTO/SignUpDTO';
 import { LogInDTO } from '../DTO/LogInDTO';
@@ -18,8 +19,13 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 // import { authRateLimiter } from '../middleware/rateLimiter';
 import logger from '../utils/logger';
 import prisma from '../db/prismaClient';
+import RedisAuthInstance from '../DTO/RedisRepository';
+import { GoogleTokenResponse, GoogleUserInfo } from '../types/GoogleResponse';
 
 const router = express.Router();
+
+const ACCESS_TOKEN_EXPIRY = parseInt(process.env.ACCESS_TOKEN_EXPIRY || '180', 10); // 3 minutes default
+//const REFRESH_TOKEN_EXPIRY = parseInt(process.env.REFRESH_TOKEN_EXPIRY || '600', 10); // 10 minutes default
 
 router.post(
   '/internal/auth/register',
@@ -178,7 +184,9 @@ router.post(
       })
     }
     try{
-      const result = await LogOffUser(refreshToken, accessToken);
+      const result = await handleLogout(refreshToken, accessToken);
+      prisma.refreshToken.delete({where:{token:refreshToken}})
+      RedisAuthInstance.blacklistToken(accessToken || "",ACCESS_TOKEN_EXPIRY)
       logger.info("Logged of succesfully");
       return res.status(result.code || 500).json({
         success: result.success,
@@ -192,12 +200,6 @@ router.post(
         message: "Internal server error"
       })
     }
-    
-    // Temporary response until logout is implemented
-    return res.status(501).json({
-      success: false,
-      message: 'Logout functionality not yet implemented',
-    });
   }
 );
 
@@ -225,24 +227,96 @@ router.get(
 
 // TODO: Implement Google OAuth authentication
 // Google Sign-In/Sign-Up endpoints
-// 
-// This should include:
-// 1. GET /internal/auth/google - Initiate Google OAuth flow (redirect to Google)
-// 2. GET /internal/auth/google/callback - Handle Google OAuth callback
-// 3. POST /internal/auth/google/token - Exchange Google token for JWT tokens
-//
-// Implementation steps:
-// 1. Install passport and passport-google-oauth20: npm install passport passport-google-oauth20 @types/passport @types/passport-google-oauth20
-// 2. Set up Google OAuth credentials in Google Cloud Console
-// 3. Configure environment variables: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL
-// 4. Implement Google OAuth strategy
-// 5. Create or find user based on Google profile
-// 6. Generate JWT tokens (same as regular login)
-// 7. Handle new user registration vs existing user login
-//
-// Example endpoint structure:
-// router.get('/internal/auth/google', /* Google OAuth redirect */);
-// router.get('/internal/auth/google/callback', /* Handle callback, create/login user, redirect with tokens */);
-// router.post('/internal/auth/google/token', /* Exchange Google token for JWT */);
+/* 
+This should include:
+1. GET /internal/auth/google - Initiate Google OAuth flow (redirect to Google)
+2. GET /internal/auth/google/callback - Handle Google OAuth callback
+3. POST /internal/auth/google/token - Exchange Google token for JWT tokens
+*/
+/*
+Implementation steps:
+1. Install passport and passport-google-oauth20: npm install passport passport-google-oauth20 @types/passport @types/passport-google-oauth20
+2. Set up Google OAuth credentials in Google Cloud Console
+3. Configure environment variables: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL
+4. Implement Google OAuth strategy
+5. Create or find user based on Google profile
+6. Generate JWT tokens (same as regular login)
+7. Handle new user registration vs existing user login
+*/
+/* Google OAuth redirect */
+router.get('/internal/auth/google', async(req: Request, res: Response) =>{
+  const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
+    const options = {
+        redirect_uri: process.env.GOOGLE_REDIRECT_URI!, 
+        client_id: process.env.GOOGLE_CLIENT_ID!,
+        access_type: 'offline',
+        response_type: 'code',
+        prompt: 'consent',
+        scope: [ 
+            'https://www.googleapis.com/auth/userinfo.email',
+            'https://www.googleapis.com/auth/userinfo.profile',
+        ].join(' '),
+    };
+
+    const qs = new URLSearchParams(options).toString();
+
+    return res.redirect(`${rootUrl}?${qs}`);
+});
+/* Handle callback, create/login user, redirect with tokens */
+
+router.get('/internal/auth/google/callback', async(req: Request, res: Response) =>{
+  const code = req.query.code as string;
+    if(!code){
+      return  res.status(400).json({
+        success: false,
+        message: "Authorization code is missing"
+      });
+    }
+    try{
+      // Exchange code for tokens and get user info
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },  
+        body: new URLSearchParams({
+          code,
+          client_id: process.env.GOOGLE_CLIENT_ID!, 
+          client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+          redirect_uri: process.env.GOOGLE_REDIRECT_URI!,
+          grant_type: 'authorization_code',
+        }),
+      });
+      const tokenData = await tokenResponse.json() as GoogleTokenResponse;
+      const accessToken = tokenData.access_token;;
+      const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      const userInfo = await userInfoResponse.json() as GoogleUserInfo;
+      // Here, implement logic to find or create user in your database
+      const AuthResult = await handleGoogleAuth({id: userInfo.id,gmail: userInfo.email});
+      // For demonstration, we'll just return the user info
+      return res.status(AuthResult.code || 200).json({
+        success: AuthResult.success,
+        message: AuthResult.message,
+        data: AuthResult.user,
+        accessToken: AuthResult.accessToken,
+        refreshToken: AuthResult.refreshToken,
+      });
+    }
+    catch(err){
+      logger.error('Google OAuth callback error:', err);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+      });
+    }
+});
+/* Exchange Google token for JWT */
+router.post('/internal/auth/google/token',async(req: Request, res: Response) =>{
+  
+});
 
 export default router;

@@ -262,9 +262,9 @@ export const logoutUser = async (refreshToken: string, accessToken?: string) => 
 };
  */
 
-export const LogOffUser = async(refreshToken: string, accessToken?: string) =>{
+export const handleLogout = async(refreshToken: string, accessToken?: string) =>{
   try{
-    await prisma.refreshToken.delete({
+    await prisma.refreshToken.deleteMany({
         where: {token : refreshToken}
       }
     )
@@ -283,7 +283,7 @@ export const LogOffUser = async(refreshToken: string, accessToken?: string) =>{
   }
   catch(err){
     console.error(err);
-    return {success: false, code: 200, message: "error occured, unable to log out user"};
+    return {success: false, code: 500, message: "error occured, unable to log out user"};
   }
 }
 /*
@@ -367,10 +367,10 @@ export const handleGoogleAuth = async (googleProfile: {
 };
 */
 export const handleGoogleAuth = async(googleProfile: {
-  id: number;
+  id: string;
   gmail: string;}) => {
   try{
-    const user = await prisma.user.findUnique({where: {email:googleProfile.gmail}});
+    let user = await prisma.user.findUnique({where: {email:googleProfile.gmail}});
     if(!user){
       const newRandomPassowrd = await bcrypt.hash(Math.random().toString(), 12);
       user = await prisma.user.create({
@@ -440,5 +440,13 @@ export const cleanupExpiredTokens = async () => {
   } catch (err) {
     logger.error('Token cleanup error:', err);
     throw err;
+  }
+};
+export const validateToken = (accessToken: string)=>{
+  try{
+    const decoded = jwt.verify(accessToken, JWT_KEY);
+    return {success: true, code: 200, decoded};
+  } catch(err){
+    return {success: false, code: 500, error: err};
   }
 };
