@@ -174,7 +174,7 @@ router.post(
       });
     }
     */
-    const refreshToken = req.body;
+    const {refreshToken} = req.body;
     const authHeader = req.headers['authorization'];
     const accessToken = authHeader && authHeader.split(' ')[1];
     if(!refreshToken){
@@ -315,8 +315,8 @@ router.get('/internal/auth/google/callback', async(req: Request, res: Response) 
     }
 });
 /* Exchange Google token for JWT */
-router.post('/internal/auth/google/token',async(req: Request, res: Response) =>{
+// router.post('/internal/auth/google/token',async(req: Request, res: Response) =>{
   
-});
+// });
 
 export default router;

@@ -5,9 +5,9 @@ import { SignUpDto } from '../DTO/SignUpDTO';
 import { LogInDTO } from '../DTO/LogInDTO';
 import prisma from '../db/prismaClient';
 import logger from '../utils/logger';
-import { Prisma, RefreshToken } from '@prisma/client';
+//import { Prisma, RefreshToken } from '@prisma/client';
 import RedisAuth from '../DTO/RedisRepository';
-import {Strategy as GoogleStrategy} from 'passport-google-oauth20';
+//import {Strategy as GoogleStrategy} from 'passport-google-oauth20';
 
 env.config();
 
