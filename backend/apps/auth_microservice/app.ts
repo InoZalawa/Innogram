@@ -3,10 +3,7 @@ import * as dotenv from 'dotenv';
 // TODO: Implement CORS
 // import cors from 'cors';
 import AuthController from './controllers/AuthController';
-import {
-  errorHandler,
-  notFoundHandler,
-} from './middleware/errorHandler';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 // TODO: Implement rate limiting
 // import { generalRateLimiter } from './middleware/rateLimiter';
 import logger from './utils/logger';
@@ -44,7 +41,7 @@ app.use(express.urlencoded({ extended: true }));
 // Request logging with response status
 app.use((req: Request, res: Response, next) => {
   const startTime = Date.now();
-  
+
   // Log request
   logger.info(`${req.method} ${req.path}`, {
     ip: req.ip,
@@ -55,7 +52,8 @@ app.use((req: Request, res: Response, next) => {
   // Log response when finished
   res.on('finish', () => {
     const duration = Date.now() - startTime;
-    const statusColor = res.statusCode >= 400 ? 'error' : res.statusCode >= 300 ? 'warn' : 'info';
+    const statusColor =
+      res.statusCode >= 400 ? 'error' : res.statusCode >= 300 ? 'warn' : 'info';
     logger[statusColor](`${req.method} ${req.path} ${res.statusCode}`, {
       statusCode: res.statusCode,
       duration: `${duration}ms`,

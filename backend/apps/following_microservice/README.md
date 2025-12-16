@@ -54,6 +54,7 @@ following_microservice/
 ## Database Schema
 
 You'll need to create Prisma models for:
+
 - `Follow` - Follow relationships table (followerId, followingId)
 
 Reference the `User` model from `auth_microservice/db/schema.prisma` for relations.

@@ -31,17 +31,20 @@ backend/
 ### Option 1: Docker (Recommended)
 
 1. **Clone and navigate:**
+
    ```bash
    cd backend
    ```
 
 2. **Set up environment:**
+
    ```bash
    cp .env.example .env
    # Edit .env and set DB_PASSWORD and JWT_KEY
    ```
 
 3. **Start all services:**
+
    ```bash
    npm run docker:up
    ```
@@ -56,11 +59,13 @@ See [README.Docker.md](./README.Docker.md) for detailed Docker instructions.
 ### Option 2: Local Development
 
 1. **Install dependencies:**
+
    ```bash
    npm install
    ```
 
 2. **Set up environment:**
+
    ```bash
    cp .env.example .env
    # Edit .env with your local database credentials
@@ -69,6 +74,7 @@ See [README.Docker.md](./README.Docker.md) for detailed Docker instructions.
 3. **Start PostgreSQL and Redis** (locally or via Docker)
 
 4. **Set up database:**
+
    ```bash
    npx prisma generate --schema=./apps/auth_microservice/db/schema.prisma
    npx prisma migrate dev --schema=./apps/auth_microservice/db/schema.prisma
@@ -88,6 +94,7 @@ A secure authentication service with JWT tokens, refresh tokens, and token black
 **Documentation:** [apps/auth_microservice/README.md](./apps/auth_microservice/README.md)
 
 **Features:**
+
 - User registration and login
 - JWT access and refresh tokens
 - Token blacklisting via Redis
@@ -102,11 +109,13 @@ A secure authentication service with JWT tokens, refresh tokens, and token black
 ## Available Scripts
 
 ### Development
+
 - `npm start` - Start the auth microservice
 - `npm run format` - Format code with Prettier
 - `npm run check-format` - Check code formatting
 
 ### Docker
+
 - `npm run docker:up` - Start all services (logs visible)
 - `npm run docker:up:detached` - Start all services in background
 - `npm run docker:down` - Stop all services
@@ -129,6 +138,7 @@ See `.env.example` for all required variables. Key variables:
 ## Technology Stack
 
 ### Auth Microservice
+
 - **Runtime:** Node.js 20
 - **Framework:** Express 5
 - **Language:** TypeScript
@@ -140,12 +150,14 @@ See `.env.example` for all required variables. Key variables:
 - **Logging:** Winston
 
 ### Posts & Following Microservices (To Be Implemented)
+
 - **Framework:** NestJS
 - **Language:** TypeScript
 - **ORM:** Prisma 7 (shared database)
 - **Authentication:** JWT (reuse auth_microservice tokens)
 
 ### Shared Infrastructure
+
 - **Database:** PostgreSQL 16
 - **Cache:** Redis 7
 - **Containerization:** Docker & Docker Compose
@@ -202,6 +214,7 @@ These microservices need to be implemented from scratch using NestJS:
 5. **Reference the README files** in each microservice folder for requirements
 
 See individual README files for detailed implementation guidelines:
+
 - [Posts Microservice README](./apps/posts_microservice/README.md)
 - [Following Microservice README](./apps/following_microservice/README.md)
 
@@ -219,6 +232,7 @@ See individual README files for detailed implementation guidelines:
 See [POSTMAN_TESTING_GUIDE.md](./POSTMAN_TESTING_GUIDE.md) for comprehensive API testing instructions.
 
 Quick test:
+
 ```bash
 # Health check
 curl http://localhost:3001/
@@ -234,20 +248,24 @@ curl -X POST http://localhost:3001/internal/auth/register \
 ### Common Issues
 
 **Port already in use:**
+
 - Change port in `docker-compose.yml` or stop conflicting service
 - See [README.Docker.md](./README.Docker.md) for details
 
 **Database connection errors:**
+
 - Verify PostgreSQL is running
 - Check `DATABASE_URL` in `.env`
 - See [README.Docker.md](./README.Docker.md) troubleshooting section
 
 **Prisma errors:**
+
 - Ensure `prisma.config.ts` exists
 - Run `npx prisma generate`
 - See [apps/auth_microservice/README.md](./apps/auth_microservice/README.md)
 
 **Docker issues:**
+
 - See [README.Docker.md](./README.Docker.md) troubleshooting section
 
 ## Contributing

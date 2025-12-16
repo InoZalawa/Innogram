@@ -9,12 +9,14 @@ This document summarizes all the improvements and fixes made to the auth microse
 **Issue:** Project was using Prisma 7 which has breaking changes from Prisma 6.
 
 **Changes:**
+
 - Created `prisma.config.ts` at backend root for database connection configuration
 - Removed `url` property from `schema.prisma` (Prisma 7 requirement)
 - Updated `prismaClient.ts` to use `@prisma/adapter-pg` adapter pattern
 - Added `DATABASE_URL` environment variable support
 
 **Files Modified:**
+
 - `prisma.config.ts` (new file)
 - `apps/auth_microservice/db/schema.prisma`
 - `apps/auth_microservice/db/prismaClient.ts`
@@ -23,6 +25,7 @@ This document summarizes all the improvements and fixes made to the auth microse
 ### 2. Security Enhancements
 
 **Added:**
+
 - CORS configuration with configurable origins
 - Rate limiting for auth endpoints (5 requests per 15 minutes)
 - General rate limiting (100 requests per 15 minutes)
@@ -31,6 +34,7 @@ This document summarizes all the improvements and fixes made to the auth microse
 - Comprehensive error handling to prevent information leakage
 
 **Files Modified:**
+
 - `apps/auth_microservice/app.ts`
 - `apps/auth_microservice/middleware/rateLimiter.ts` (new)
 - `apps/auth_microservice/middleware/errorHandler.ts` (new)
@@ -41,6 +45,7 @@ This document summarizes all the improvements and fixes made to the auth microse
 ### 3. Logging System
 
 **Added:**
+
 - Winston logger with structured logging
 - Console output for Docker/terminal visibility
 - Request/response logging with timing
@@ -48,6 +53,7 @@ This document summarizes all the improvements and fixes made to the auth microse
 - Configurable log levels via environment variable
 
 **Files Modified:**
+
 - `apps/auth_microservice/utils/logger.ts` (new)
 - `apps/auth_microservice/app.ts`
 - `apps/auth_microservice/services/AuthService.ts`
@@ -56,6 +62,7 @@ This document summarizes all the improvements and fixes made to the auth microse
 ### 4. Token Management
 
 **Added:**
+
 - Refresh token functionality
 - Token refresh endpoint (`POST /internal/auth/refresh`)
 - Automatic cleanup of expired refresh tokens (hourly)
@@ -63,6 +70,7 @@ This document summarizes all the improvements and fixes made to the auth microse
 - Configurable token expiry times via environment variables
 
 **Files Modified:**
+
 - `apps/auth_microservice/services/AuthService.ts`
 - `apps/auth_microservice/controllers/AuthController.ts`
 - `apps/auth_microservice/DTO/RedisRepository.ts`
@@ -71,6 +79,7 @@ This document summarizes all the improvements and fixes made to the auth microse
 ### 5. Docker Support
 
 **Added:**
+
 - Multi-stage Dockerfile for optimized builds
 - Docker Compose configuration for full stack
 - Startup script (`start.sh`) for container initialization
@@ -79,6 +88,7 @@ This document summarizes all the improvements and fixes made to the auth microse
 - Non-root user execution for security
 
 **Files Created:**
+
 - `Dockerfile`
 - `docker-compose.yml`
 - `start.sh`
@@ -86,40 +96,48 @@ This document summarizes all the improvements and fixes made to the auth microse
 - `README.Docker.md`
 
 **Files Modified:**
+
 - `package.json` (added Docker scripts)
 
 ### 6. API Endpoints
 
 **Added:**
+
 - `POST /internal/auth/refresh` - Refresh access token
 - `POST /internal/auth/logout` - Logout with token blacklisting
 - `GET /internal/auth/me` - Get current user info
 
 **Improved:**
+
 - `POST /internal/auth/register` - Added validation and rate limiting
 - `POST /internal/auth/login` - Added rate limiting and proper error handling
 
 **Files Modified:**
+
 - `apps/auth_microservice/controllers/AuthController.ts`
 
 ### 7. Database Schema
 
 **Added:**
+
 - `createdAt` and `updatedAt` timestamps on User model
 - `createdAt` and `expiresAt` timestamps on RefreshToken model
 - Cascade delete for refresh tokens
 
 **Files Modified:**
+
 - `apps/auth_microservice/db/schema.prisma`
 
 ### 8. TypeScript Fixes
 
 **Fixed:**
+
 - Missing return statements in middleware functions
 - Missing type definitions (`@types/cors`)
 - Proper return types for Express middleware
 
 **Files Modified:**
+
 - `apps/auth_microservice/middleware/errorHandler.ts`
 - `apps/auth_microservice/middleware/auth.ts`
 - `package.json` (added `@types/cors`)
@@ -127,16 +145,19 @@ This document summarizes all the improvements and fixes made to the auth microse
 ### 9. Configuration Management
 
 **Added:**
+
 - Centralized configuration in `config/index.ts`
 - Environment variable validation
 - Default values for optional variables
 
 **Files Created:**
+
 - `apps/auth_microservice/config/index.ts`
 
 ### 10. Documentation
 
 **Created/Updated:**
+
 - `README.md` - Main project documentation
 - `apps/auth_microservice/README.md` - Complete auth service guide
 - `README.Docker.md` - Comprehensive Docker guide
@@ -147,22 +168,27 @@ This document summarizes all the improvements and fixes made to the auth microse
 ## Bug Fixes
 
 1. **User Registration Logic**
+
    - Fixed: Incorrect check for existing users
    - Changed from `if (!isUserUnique)` to `if (existingUser)`
 
 2. **Prisma Client Generation**
+
    - Fixed: Prisma client not generated before use
    - Added generation step in Docker startup script
 
 3. **Database Connection**
+
    - Fixed: Prisma 7 adapter pattern implementation
    - Properly configured `@prisma/adapter-pg` with pg Pool
 
 4. **Redis Client Type**
+
    - Fixed: Type compatibility issues with Redis client
    - Updated to use `ReturnType<typeof createClient>`
 
 5. **Docker Line Endings**
+
    - Fixed: `start.sh` not executable in Docker (CRLF vs LF)
    - Added line ending conversion in Dockerfile
 
@@ -192,7 +218,7 @@ This document summarizes all the improvements and fixes made to the auth microse
 
 - `ACCESS_TOKEN_EXPIRY` - Access token expiry in seconds (default: 180)
 - `REFRESH_TOKEN_EXPIRY` - Refresh token expiry in seconds (default: 600)
-- `CORS_ORIGIN` - CORS allowed origin (default: *)
+- `CORS_ORIGIN` - CORS allowed origin (default: \*)
 - `LOG_LEVEL` - Logging level (default: info)
 - `DATABASE_URL` - Prisma 7 database connection string
 
@@ -219,11 +245,13 @@ This document summarizes all the improvements and fixes made to the auth microse
 ## Project Structure Changes
 
 **New Directories:**
+
 - `apps/auth_microservice/config/`
 - `apps/auth_microservice/middleware/`
 - `apps/auth_microservice/utils/`
 
 **New Files:**
+
 - `prisma.config.ts` (backend root)
 - `Dockerfile`
 - `docker-compose.yml`
@@ -266,17 +294,20 @@ This document summarizes all the improvements and fixes made to the auth microse
 If upgrading from the old version:
 
 1. **Update dependencies:**
+
    ```bash
    npm install
    ```
 
 2. **Add new environment variables:**
+
    ```bash
    cp .env.example .env
    # Edit .env and add new variables
    ```
 
 3. **Update Prisma:**
+
    ```bash
    npx prisma generate --schema=./apps/auth_microservice/db/schema.prisma
    npx prisma migrate dev --schema=./apps/auth_microservice/db/schema.prisma

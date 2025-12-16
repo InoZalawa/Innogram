@@ -1,6 +1,6 @@
 // TODO: Implement rate limiting
 // Rate limiting helps prevent abuse and brute force attacks
-// 
+//
 // Instructions:
 // 1. Install express-rate-limit: npm install express-rate-limit
 // 2. Implement authRateLimiter for authentication endpoints (login, register)

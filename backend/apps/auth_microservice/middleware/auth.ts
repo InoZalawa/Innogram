@@ -29,10 +29,10 @@ export const authenticateToken = async (
     const redisClient = await getRedisClient();
     const redisRepo = new RedisAuthRepository(redisClient);
     const isBlacklisted = await redisRepo.isTokenBlacklisted(token);
-    
+
     if (isBlacklisted) {
       logger.warn('Blacklisted token attempt');
-      
+
       return res.status(403).json({
         success: false,
         message: 'Token has been revoked',

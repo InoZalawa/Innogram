@@ -28,14 +28,17 @@ A secure, production-ready authentication microservice built with Express, TypeS
 ### Public Endpoints
 
 - `GET /` - Health check endpoint
+
   - Returns: `{ success: true, message: "Auth microservice is running", timestamp: "..." }`
 
 - `POST /internal/auth/register` - Register a new user
+
   - Body: `{ username, email, password, repeatPassword }`
   - TODO: Add rate limiting (5 requests per 15 minutes recommended)
   - TODO: Add input validation (Username: 3-30 chars, Email: valid format, Password: min 8 chars with uppercase, lowercase, number)
 
 - `POST /internal/auth/login` - Login user
+
   - Body: `{ login, password }` (login can be username OR email)
   - Returns: `{ accessToken, refreshToken }`
   - TODO: Add rate limiting (5 requests per 15 minutes recommended)
@@ -48,6 +51,7 @@ A secure, production-ready authentication microservice built with Express, TypeS
 ### Protected Endpoints (Require Authentication)
 
 - `POST /internal/auth/logout` - Logout user (TODO: To be implemented)
+
   - Headers: `Authorization: Bearer <accessToken>`
   - Body: `{ refreshToken }`
   - Currently returns 501 (Not Implemented)
@@ -144,16 +148,19 @@ npm install
 The `prisma.config.ts` file is already configured at `backend/prisma.config.ts`.
 
 **Generate Prisma Client:**
+
 ```bash
 npx prisma generate --schema=./apps/auth_microservice/db/schema.prisma
 ```
 
 **Run Migrations:**
+
 ```bash
 npx prisma migrate dev --schema=./apps/auth_microservice/db/schema.prisma
 ```
 
 Or push schema directly (for development):
+
 ```bash
 npx prisma db push --schema=./apps/auth_microservice/db/schema.prisma
 ```
@@ -173,6 +180,7 @@ npx prisma db push --schema=./apps/auth_microservice/db/schema.prisma
 See [README.Docker.md](../../README.Docker.md) for detailed Docker setup.
 
 Quick start:
+
 ```bash
 npm run docker:up
 ```
@@ -197,6 +205,7 @@ npm run docker:up
 ## TODO: Features to Implement
 
 ### 1. Rate Limiting
+
 - **File**: `middleware/rateLimiter.ts`
 - **Purpose**: Prevent brute force attacks and abuse
 - **Instructions**: See comments in `middleware/rateLimiter.ts` for implementation details
@@ -207,6 +216,7 @@ npm run docker:up
   - Uncomment rate limiting in `app.ts` and `controllers/AuthController.ts`
 
 ### 2. Input Validation
+
 - **File**: `utils/validation.ts`
 - **Purpose**: Validate and sanitize user inputs
 - **Instructions**: See comments in `utils/validation.ts` for implementation details
@@ -219,6 +229,7 @@ npm run docker:up
   - Uncomment validation middleware in `controllers/AuthController.ts`
 
 ### 3. Logout Functionality
+
 - **Files**: `services/AuthService.ts`, `controllers/AuthController.ts`
 - **Purpose**: Allow users to securely log out
 - **Instructions**: See comments in both files for implementation details
@@ -230,6 +241,7 @@ npm run docker:up
   - Uncomment logout code in both files
 
 ### 4. CORS Configuration
+
 - **File**: `app.ts`
 - **Purpose**: Enable cross-origin requests from web applications
 - **Instructions**: See comments in `app.ts` for implementation details
@@ -241,6 +253,7 @@ npm run docker:up
   - Uncomment CORS code in `app.ts`
 
 ### 5. Google OAuth Authentication
+
 - **Files**: `services/AuthService.ts`, `controllers/AuthController.ts`
 - **Purpose**: Allow users to sign in/sign up using Google accounts
 - **Instructions**: See comments in both files for implementation details
@@ -264,6 +277,7 @@ The service uses Winston for structured logging:
 - **Request Logging**: All requests logged with method, path, status code, and duration
 
 Example log output:
+
 ```
 2025-12-06 21:10:15 [info]: POST /internal/auth/login
 2025-12-06 21:10:15 [info]: POST /internal/auth/login 200 {"statusCode":200,"duration":"45ms","ip":"::ffff:172.18.0.1"}
@@ -281,6 +295,7 @@ Example log output:
 See [POSTMAN_TESTING_GUIDE.md](../../POSTMAN_TESTING_GUIDE.md) for comprehensive testing instructions.
 
 Quick test:
+
 ```bash
 # Health check
 curl http://localhost:3001/
@@ -299,6 +314,7 @@ curl -X POST http://localhost:3001/internal/auth/login \
 ## Docker
 
 The service is fully Dockerized. See [README.Docker.md](../../README.Docker.md) for:
+
 - Docker setup instructions
 - Available npm scripts
 - Troubleshooting guide
@@ -307,11 +323,13 @@ The service is fully Dockerized. See [README.Docker.md](../../README.Docker.md) 
 ## NPM Scripts
 
 ### Development
+
 - `npm start` - Start the server locally
 - `npm run format` - Format code with Prettier
 - `npm run check-format` - Check code formatting
 
 ### Docker
+
 - `npm run docker:up` - Start all services (with logs in terminal)
 - `npm run docker:up:detached` - Start all services in background
 - `npm run docker:down` - Stop all services
@@ -326,10 +344,12 @@ The service is fully Dockerized. See [README.Docker.md](../../README.Docker.md) 
 ### Prisma 7 Issues
 
 **Error: "The datasource property `url` is no longer supported"**
+
 - Solution: Prisma 7 uses `prisma.config.ts` for connection URLs, not `schema.prisma`
 - Ensure `prisma.config.ts` exists at the backend root
 
 **Error: "The datasource property is required in your Prisma config file"**
+
 - Solution: Ensure `prisma.config.ts` is present and properly configured
 - Check that `DATABASE_URL` environment variable is set
 
@@ -367,7 +387,7 @@ The service is fully Dockerized. See [README.Docker.md](../../README.Docker.md) 
 3. **Redis**: Consider Redis Cluster for high availability
 4. **Logging**: Use centralized logging (ELK, Datadog, etc.)
 5. **Monitoring**: Add health checks, metrics, and alerting
-6. **Security**: 
+6. **Security**:
    - Use HTTPS in production
    - Set proper CORS origins
    - Use strong JWT keys (32+ characters)
@@ -377,6 +397,7 @@ The service is fully Dockerized. See [README.Docker.md](../../README.Docker.md) 
 ## Contributing
 
 When adding new features:
+
 1. Follow the existing project structure
 2. Add proper TypeScript types
 3. Include input validation
