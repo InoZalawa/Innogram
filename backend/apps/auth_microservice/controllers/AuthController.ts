@@ -103,25 +103,25 @@ router.post('/internal/auth/refresh', async (req: Request, res: Response) => {
   const { refreshToken } = req.body;
 
   if (!refreshToken) {
-    return res.status(400).json({
-      success: false,
-      message: 'Refresh token is required',
-    });
+    return res
+      .status(400)
+      .json({ success: false, message: 'Refresh token is required' });
   }
 
   try {
     const result = await refreshAccessToken(refreshToken);
+
     return res.status(result.status || 500).json({
       success: result.success,
       message: result.message,
       accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
     });
   } catch (err) {
     logger.error('Token refresh controller error:', err);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-    });
+    return res
+      .status(500)
+      .json({ success: false, message: 'Internal server error' });
   }
 });
 

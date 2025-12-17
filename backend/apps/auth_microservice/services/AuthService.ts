@@ -126,15 +126,16 @@ export const logInUser = async (logInDto: LogInDTO) => {
   };
 };
 
-export const refreshAccessToken = async (refreshToken: string) => {
+export const refreshAccessToken = async (oldRefreshToken: string) => {
   try {
-    const decoded = jwt.verify(refreshToken, JWT_KEY!) as {
+    const decoded = jwt.verify(oldRefreshToken, JWT_KEY!) as {
       userId: number;
       sub: string;
     };
 
-    const userIdFromRedis = await RedisAuth.findSessionByTokenId(refreshToken);
-
+    const userIdFromRedis = await RedisAuth.findSessionByTokenId(
+      oldRefreshToken
+    );
     if (!userIdFromRedis || userIdFromRedis !== decoded.userId.toString()) {
       return {
         success: false,
@@ -143,18 +144,32 @@ export const refreshAccessToken = async (refreshToken: string) => {
       };
     }
 
-    const accessToken = jwt.sign(
-      { userId: decoded.userId, sub: decoded.sub },
-      JWT_KEY!,
-      { expiresIn: ACCESS_TOKEN_EXPIRY }
+    const tokenPayload = { userId: decoded.userId, sub: decoded.sub };
+    const newAccessToken = jwt.sign(tokenPayload, JWT_KEY!, {
+      expiresIn: ACCESS_TOKEN_EXPIRY,
+    });
+    const newRefreshToken = jwt.sign(tokenPayload, JWT_KEY!, {
+      expiresIn: REFRESH_TOKEN_EXPIRY,
+    });
+
+    await RedisAuth.storeRefreshTokenId(
+      decoded.userId.toString(),
+      newRefreshToken
     );
 
-    return { success: true, status: 200, accessToken };
+    await RedisAuth.blacklistToken(oldRefreshToken, 30);
+
+    return {
+      success: true,
+      status: 200,
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
   } catch (err) {
     return {
       success: false,
       status: 401,
-      message: 'Invalid refresh token: ' + err,
+      message: 'Invalid refresh token' + err,
     };
   }
 };
@@ -170,10 +185,6 @@ export const handleLogout = async (
       await RedisAuth.blacklistToken(accessToken, ACCESS_TOKEN_EXPIRY);
     }
 
-    await prisma.refreshToken.deleteMany({
-      where: { userId: userId },
-    });
-
     return { success: true, status: 200, message: 'Logged out successfully' };
   } catch (err) {
     logger.error('Logout error:', err);
@@ -181,29 +192,23 @@ export const handleLogout = async (
   }
 };
 
-export const cleanupExpiredTokens = async () => {
+export const validateToken = async (accessToken: string) => {
   try {
-    const result = await prisma.refreshToken.deleteMany({
-      where: {
-        expiresAt: {
-          lt: new Date(),
-        },
-      },
-    });
+    const decoded = jwt.verify(accessToken, JWT_KEY!);
 
-    logger.info(`Cleaned up ${result.count} expired refresh tokens`);
-    return result.count;
-  } catch (err) {
-    logger.error('Token cleanup error:', err);
-    throw err;
-  }
-};
-export const validateToken = (accessToken: string) => {
-  try {
-    const decoded = jwt.verify(accessToken, JWT_KEY);
+    const isBlacklisted = await RedisAuth.isTokenBlacklisted(accessToken);
+
+    if (isBlacklisted) {
+      return {
+        success: false,
+        code: 401,
+        message: 'Token has been invalidated (logged out)',
+      };
+    }
+
     return { success: true, code: 200, decoded };
   } catch (err) {
-    return { success: false, code: 500, error: err };
+    return { success: false, code: 401, error: err };
   }
 };
 
@@ -237,6 +242,7 @@ export const handleGoogleAuth = async (googleProfile: {
   id: string;
   gmail: string;
 }) => {
+  googleProfile.gmail = googleProfile.gmail.toLowerCase();
   try {
     let user = await prisma.user.findUnique({
       where: { email: googleProfile.gmail },
