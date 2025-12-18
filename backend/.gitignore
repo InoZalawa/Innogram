@@ -44,3 +44,15 @@ Thumbs.db
 .github/instructions/nx.instructions.md
 
 .env
+
+# Prisma generated files
+**/prisma/client*
+**/prisma/*.js
+**/prisma/*.d.ts
+**/prisma/*.wasm
+**/prisma/*.mjs
+**/prisma/runtime/
+**/prisma/package.json
+**/prisma/query_compiler*
+**/prisma/wasm-*
+**/node_modules/.prisma/

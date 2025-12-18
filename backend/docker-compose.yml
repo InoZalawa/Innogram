@@ -56,6 +56,12 @@ services:
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
     ports:
       - "3001:3001"
+    volumes:
+      - ./apps:/app/apps
+      - ./package.json:/app/package.json
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./tsconfig.base.json:/app/tsconfig.base.json
+      - ./prisma.config.ts:/app/prisma.config.ts
     depends_on:
       postgres:
         condition: service_healthy

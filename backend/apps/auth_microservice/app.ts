@@ -66,6 +66,8 @@ app.use((req: Request, res: Response, next) => {
 
 // Health check
 app.get('/', (req: Request, res: Response) => {
+  console.log('hi');
+  
   res.json({
     success: true,
     message: 'Auth microservice is running',
