@@ -5,10 +5,8 @@ import { SignUpDto } from '../DTO/SignUpDTO';
 import { LogInDTO } from '../DTO/LogInDTO';
 import prisma from '../db/prismaClient';
 import logger from '../utils/logger';
-//import { Prisma, RefreshToken } from '@prisma/client';
 import RedisAuth from '../DTO/RedisRepository';
 import axios from 'axios';
-//import {Strategy as GoogleStrategy} from 'passport-google-oauth20';
 import { GoogleUserInfo, GoogleTokenResponse } from '../types/GoogleResponse';
 
 env.config();
@@ -39,7 +37,8 @@ export const registerUser = async (signUpDto: SignUpDto) => {
       };
     }
 
-    const result = await prisma.$transaction(async (tx) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await prisma.$transaction(async (tx: any) => {
       const encryptedPassword = await bcrypt.hash(signUpDto.password, 12);
 
       // Check if user already exists

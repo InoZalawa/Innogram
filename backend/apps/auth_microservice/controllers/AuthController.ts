@@ -9,15 +9,7 @@ import {
 } from '../services/AuthService';
 import { SignUpDto } from '../DTO/SignUpDTO';
 import { LogInDTO } from '../DTO/LogInDTO';
-// TODO: Implement input validation
-// import {
-//   registerValidation,
-//   loginValidation,
-// } from '../utils/validation';
-// import { validationErrorHandler } from '../middleware/errorHandler';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
-// TODO: Implement rate limiting
-// import { authRateLimiter } from '../middleware/rateLimiter';
 import logger from '../utils/logger';
 import prisma from '../db/prismaClient';
 //import { GoogleTokenResponse, GoogleUserInfo } from '../types/GoogleResponse';
