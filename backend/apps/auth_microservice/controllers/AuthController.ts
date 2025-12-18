@@ -19,10 +19,7 @@ const router = express.Router();
 //const ACCESS_TOKEN_EXPIRY = parseInt(process.env.ACCESS_TOKEN_EXPIRY || '180', 10); // 3 minutes default
 //const REFRESH_TOKEN_EXPIRY = parseInt(process.env.REFRESH_TOKEN_EXPIRY || '600', 10); // 10 minutes default
 
-router.post(
-  '/internal/auth/register',
-
-  async (req: Request, res: Response) => {
+router.post('/internal/auth/register', async (req: Request, res: Response) => {
     const { username, password, repeatPassword, email } = req.body;
 
     try {
@@ -117,10 +114,7 @@ router.post('/internal/auth/refresh', async (req: Request, res: Response) => {
   }
 });
 
-router.post(
-  '/internal/auth/logout',
-  authenticateToken,
-  async (req: AuthRequest, res: Response) => {
+router.post('/internal/auth/logout', authenticateToken, async (req: AuthRequest, res: Response) => {
     const { refreshToken } = req.body;
     const authHeader = req.headers['authorization'];
     const accessToken = authHeader && authHeader.split(' ')[1];
@@ -144,10 +138,7 @@ router.post(
   }
 );
 
-router.get(
-  '/internal/auth/me',
-  authenticateToken,
-  async (req: AuthRequest, res: Response) => {
+router.get('/internal/auth/me', authenticateToken, async (req: AuthRequest, res: Response) => {
     try {
       return res.status(200).json({
         success: true,
@@ -194,4 +185,5 @@ router.get('/auth/google/callback', async (req: Request, res: Response) => {
       .json({ success: false, message: 'Authentication failed' });
   }
 });
+
 export default router;
