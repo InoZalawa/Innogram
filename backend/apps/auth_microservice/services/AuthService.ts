@@ -156,7 +156,7 @@ export const refreshAccessToken = async (oldRefreshToken: string) => {
       newRefreshToken
     );
 
-    await RedisAuth.blacklistToken(oldRefreshToken, 30);
+    await RedisAuth.blacklistToken(oldRefreshToken, REFRESH_TOKEN_EXPIRY );
 
     return {
       success: true,
@@ -164,11 +164,11 @@ export const refreshAccessToken = async (oldRefreshToken: string) => {
       accessToken: newAccessToken,
       refreshToken: newRefreshToken,
     };
-  } catch (err) {
+  } catch{
     return {
       success: false,
       status: 401,
-      message: 'Invalid refresh token' + err,
+      message: 'Invalid refresh token',
     };
   }
 };
@@ -178,12 +178,13 @@ export const handleLogout = async (
   accessToken?: string
 ) => {
   try {
-    await RedisAuth.findSessionByTokenId(refreshToken);
-
     if (accessToken) {
       await RedisAuth.blacklistToken(accessToken, ACCESS_TOKEN_EXPIRY);
     }
-
+    const user = await RedisAuth.findSessionByTokenId(refreshToken);    
+    if(user === null) {
+      return { success: false, status: 400, message: 'Invalid refresh token' };
+    }
     return { success: true, status: 200, message: 'Logged out successfully' };
   } catch (err) {
     logger.error('Logout error:', err);

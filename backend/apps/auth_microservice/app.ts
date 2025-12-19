@@ -4,6 +4,8 @@ import AuthController from './controllers/AuthController';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import logger from './utils/logger';
 
+// import { cleanupExpiredTokens } from './services/AuthService';
+
 dotenv.config();
 
 const app = express();
@@ -43,7 +45,7 @@ app.use((req: Request, res: Response, next) => {
 app.get('/', (req: Request, res: Response) => {
   res.json({
     success: true,
-    message: 'Auth microservice is running',
+    message: 'Auth microservice is running 123',
     timestamp: new Date().toISOString(),
   });
 });
@@ -61,7 +63,14 @@ app.listen(PORT, () => {
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
-
+// Cleanup expired tokens every hour
+setInterval(async () => {
+  try {
+    // await cleanupExpiredTokens();
+  } catch (err) {
+    logger.error('Error cleaning up expired tokens:', err);
+  }
+}, 60 * 60 * 1000); // 1 hour
 // Graceful shutdown
 process.on('SIGTERM', () => {
   logger.info('SIGTERM signal received: closing HTTP server');

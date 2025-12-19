@@ -44,6 +44,7 @@ Thumbs.db
 .github/instructions/nx.instructions.md
 
 .env
+<<<<<<< Updated upstream
 
 # Prisma generated files
 **/prisma/client*
@@ -56,3 +57,9 @@ Thumbs.db
 **/prisma/query_compiler*
 **/prisma/wasm-*
 **/node_modules/.prisma/
+=======
+README.md
+combined.log
+error.log
+CHANGELOG.md
+>>>>>>> Stashed changes

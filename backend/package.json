@@ -50,6 +50,7 @@
     "packages/*"
   ],
   "dependencies": {
+    "@nestjs/common": "^11.1.9",
     "@prisma/adapter-pg": "^7.1.0",
     "@prisma/client": "^7.0.1",
     "axios": "^1.13.2",
