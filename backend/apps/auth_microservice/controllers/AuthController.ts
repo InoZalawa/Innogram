@@ -5,7 +5,7 @@ import {
   refreshAccessToken,
   handleLogout,
   handleOAuthCallback,
-  handleOAuthInit,
+  initiateOAuthFlow,
 } from '../services/AuthService';
 import { SignUpDto } from '../DTO/SignUpDTO';
 import { LogInDTO } from '../DTO/LogInDTO';
@@ -20,30 +20,24 @@ const router = express.Router();
 //const REFRESH_TOKEN_EXPIRY = parseInt(process.env.REFRESH_TOKEN_EXPIRY || '600', 10); // 10 minutes default
 
 router.post('/internal/auth/register', async (req: Request, res: Response) => {
-    const { username, password, repeatPassword, email } = req.body;
+  const { username, password, repeatPassword, email } = req.body;
 
-    try {
-      const signUpDto = new SignUpDto(
-        username,
-        password,
-        repeatPassword,
-        email
-      );
-      const result = await registerUser(signUpDto);
+  try {
+    const signUpDto = new SignUpDto(username, password, repeatPassword, email);
+    const result = await registerUser(signUpDto);
 
-      return res.status(result.status || 500).json({
-        success: result.success,
-        message: result.message,
-      });
-    } catch (err) {
-      logger.error('Registration controller error:', err);
-      return res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-      });
-    }
+    return res.status(result.status || 500).json({
+      success: result.success,
+      message: result.message,
+    });
+  } catch (err) {
+    logger.error('Registration controller error:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
   }
-);
+});
 
 router.get('/internal/auth/users', async (_req: Request, res: Response) => {
   try {
@@ -114,7 +108,10 @@ router.post('/internal/auth/refresh', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/internal/auth/logout', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.post(
+  '/internal/auth/logout',
+  authenticateToken,
+  async (req: AuthRequest, res: Response) => {
     const { refreshToken } = req.body;
     const authHeader = req.headers['authorization'];
     const accessToken = authHeader && authHeader.split(' ')[1];
@@ -138,7 +135,10 @@ router.post('/internal/auth/logout', authenticateToken, async (req: AuthRequest,
   }
 );
 
-router.get('/internal/auth/me', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.get(
+  '/internal/auth/me',
+  authenticateToken,
+  async (req: AuthRequest, res: Response) => {
     try {
       return res.status(200).json({
         success: true,
@@ -159,7 +159,7 @@ router.get('/internal/auth/me', authenticateToken, async (req: AuthRequest, res:
 
 router.get('/auth/google', async (req: Request, res: Response) => {
   try {
-    const redirectUrl = await handleOAuthInit();
+    const redirectUrl = await initiateOAuthFlow();
     //logger.info(redirectUrl);
     return res.redirect(redirectUrl);
   } catch (err) {

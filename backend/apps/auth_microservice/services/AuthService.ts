@@ -27,7 +27,6 @@ const REFRESH_TOKEN_EXPIRY = parseInt(
 
 export const registerUser = async (signUpDto: SignUpDto) => {
   try {
-    // Validate password match
     if (signUpDto.password !== signUpDto.repeatPassword) {
       logger.warn('Registration failed: passwords do not match');
       return {
@@ -37,11 +36,9 @@ export const registerUser = async (signUpDto: SignUpDto) => {
       };
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await prisma.$transaction(async (tx: any) => {
       const encryptedPassword = await bcrypt.hash(signUpDto.password, 12);
 
-      // Check if user already exists
       const existingUser = await tx.user.findFirst({
         where: {
           OR: [{ email: signUpDto.email }, { username: signUpDto.username }],
@@ -156,7 +153,7 @@ export const refreshAccessToken = async (oldRefreshToken: string) => {
       newRefreshToken
     );
 
-    await RedisAuth.blacklistToken(oldRefreshToken, REFRESH_TOKEN_EXPIRY );
+    await RedisAuth.blacklistToken(oldRefreshToken, REFRESH_TOKEN_EXPIRY);
 
     return {
       success: true,
@@ -164,7 +161,7 @@ export const refreshAccessToken = async (oldRefreshToken: string) => {
       accessToken: newAccessToken,
       refreshToken: newRefreshToken,
     };
-  } catch{
+  } catch {
     return {
       success: false,
       status: 401,
@@ -178,16 +175,25 @@ export const handleLogout = async (
   accessToken?: string
 ) => {
   try {
+    const user = await RedisAuth.findSessionByTokenId(refreshToken);
+
+    if (user === null) {
+      return { success: false, status: 400, message: 'Invalid refresh token' };
+    }
+    if (Number(user) !== userId) {
+      logger.warn(
+        `Security alert: ${userId} tried to logout session of ${user}`
+      );
+      return { success: false, status: 403, message: 'Access denied' };
+    }
+
     if (accessToken) {
       await RedisAuth.blacklistToken(accessToken, ACCESS_TOKEN_EXPIRY);
     }
-    const user = await RedisAuth.findSessionByTokenId(refreshToken);    
-    if(user === null) {
-      return { success: false, status: 400, message: 'Invalid refresh token' };
-    }
+
     return { success: true, status: 200, message: 'Logged out successfully' };
-  } catch (err) {
-    logger.error('Logout error:', err);
+  } catch {
+    logger.error('Logout error');
     return { success: false, status: 500, message: 'Internal server error' };
   }
 };
@@ -241,7 +247,16 @@ export const exchangeCodeForTokens = async (
 export const handleGoogleAuth = async (googleProfile: {
   id: string;
   gmail: string;
+  verified_email: boolean;
 }) => {
+  if (!googleProfile.verified_email) {
+    logger.error('Google email not verified');
+    return {
+      success: false,
+      status: 400,
+      message: 'Google email not verified',
+    };
+  }
   googleProfile.gmail = googleProfile.gmail.toLowerCase();
   try {
     let user = await prisma.user.findUnique({
@@ -295,13 +310,16 @@ export const handleGoogleAuth = async (googleProfile: {
 
 export const handleOAuthCallback = async (code: string) => {
   const googleProfile = await exchangeCodeForTokens(code);
+  const isVerified =
+    googleProfile.verified_email ?? (googleProfile as any).email_verified;
   return await handleGoogleAuth({
     id: googleProfile.id,
     gmail: googleProfile.email,
+    verified_email: isVerified,
   });
 };
 
-export const handleOAuthInit = async () => {
+export const initiateOAuthFlow = async () => {
   const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
   const options = {
     redirect_uri: process.env.GOOGLE_REDIRECT_URI!,

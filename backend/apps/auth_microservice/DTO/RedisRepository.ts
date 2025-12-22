@@ -48,7 +48,7 @@ const redisClient = createClient({
 redisClient.on('error', (err) => console.error('Redis Client Error', err));
 
 (async () => {
-  await redisClient.connect(); // To jest kluczowe połączenie
+  await redisClient.connect();
 })();
 
 const RedisAuthInstance = new RedisAuthRepository(redisClient);

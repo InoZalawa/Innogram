@@ -45,7 +45,7 @@ app.use((req: Request, res: Response, next) => {
 app.get('/', (req: Request, res: Response) => {
   res.json({
     success: true,
-    message: 'Auth microservice is running 123',
+    message: 'Auth microservice is running 123 123 123',
     timestamp: new Date().toISOString(),
   });
 });
