@@ -17,28 +17,33 @@ cp .env.example .env
 ```
 
 Edit `.env` and update the values, especially:
+
 - `DB_PASSWORD` - Choose a secure password
 - `JWT_KEY` - Generate a secure random key (32+ characters recommended)
 
 ### 2. Start All Services
 
 **Option A: With Logs in Terminal (Recommended for Development)**
+
 ```bash
 npm run docker:up
 ```
 
 This will:
+
 - Build the backend image
 - Start PostgreSQL, Redis, and Backend containers
 - Show all logs in real-time in your terminal
 - Keep running until you press `Ctrl+C`
 
 **Option B: Detached Mode (Background)**
+
 ```bash
 npm run docker:up:detached
 ```
 
 Then view logs separately:
+
 ```bash
 npm run docker:logs:backend
 ```
@@ -50,8 +55,9 @@ npm run docker:ps
 ```
 
 You should see:
+
 - `innogram-postgres` - Healthy
-- `innogram-redis` - Healthy  
+- `innogram-redis` - Healthy
 - `innogram-backend` - Running
 
 ### 4. Test the API
@@ -61,6 +67,7 @@ curl http://localhost:3001/
 ```
 
 Expected response:
+
 ```json
 {
   "success": true,
@@ -72,6 +79,7 @@ Expected response:
 ## Available NPM Scripts
 
 ### Starting/Stopping
+
 - `npm run docker:up` - Start all services with logs visible
 - `npm run docker:up:detached` - Start all services in background
 - `npm run docker:down` - Stop and remove all containers
@@ -80,12 +88,14 @@ Expected response:
 - `npm run docker:restart` - Restart all containers
 
 ### Logs
+
 - `npm run docker:logs` - View all logs (follow mode)
 - `npm run docker:logs:backend` - View only backend logs
 - `npm run docker:logs:postgres` - View only PostgreSQL logs
 - `npm run docker:logs:redis` - View only Redis logs
 
 ### Management
+
 - `npm run docker:ps` - List running containers
 - `npm run docker:rebuild` - Rebuild backend image and restart
 - `npm run docker:clean` - Stop containers and remove volumes (⚠️ deletes data)
@@ -93,12 +103,14 @@ Expected response:
 ## Docker Compose Services
 
 ### Backend Service
+
 - **Image**: Built from `Dockerfile`
 - **Port**: `3001:3001`
 - **Environment**: Configured via `.env` file
 - **Depends on**: PostgreSQL and Redis (waits for health checks)
 
 ### PostgreSQL Service
+
 - **Image**: `postgres:16-alpine`
 - **Port**: `5432:5432`
 - **Database**: `Innogram` (configurable)
@@ -106,6 +118,7 @@ Expected response:
 - **Health Check**: Checks every 10 seconds
 
 ### Redis Service
+
 - **Image**: `redis:7-alpine`
 - **Port**: `6379:6379`
 - **Volume**: `redis_data` (persistent storage)
@@ -116,12 +129,14 @@ Expected response:
 The following environment variables are used in Docker:
 
 ### Database
+
 - `DB_USER` - PostgreSQL username (default: `postgres`)
 - `DB_PASSWORD` - PostgreSQL password (⚠️ required)
 - `DB_DATABASE` - Database name (default: `Innogram`)
 - `DB_PORT` - PostgreSQL port (default: `5432`)
 
 ### Backend
+
 - `JWT_KEY` - Secret key for JWT tokens (⚠️ required)
 - `PORT` - Backend server port (default: `3001`)
 - `NODE_ENV` - Environment (set to `production` in Docker)
@@ -129,10 +144,12 @@ The following environment variables are used in Docker:
 - `LOG_LEVEL` - Logging level (default: `info`)
 
 ### Redis
+
 - `REDIS_HOST` - Redis hostname (default: `redis` in Docker)
 - `REDIS_PORT` - Redis port (default: `6379`)
 
 ### Token Expiry
+
 - `ACCESS_TOKEN_EXPIRY` - Access token expiry in seconds (default: `180`)
 - `REFRESH_TOKEN_EXPIRY` - Refresh token expiry in seconds (default: `600`)
 
@@ -146,6 +163,7 @@ The Dockerfile uses a multi-stage build:
 4. **runner**: Final production image with non-root user
 
 **Key Features:**
+
 - Uses Node.js 20 Alpine (smaller image size)
 - Runs as non-root user (`nodejs`)
 - Automatically runs Prisma migrations on startup
@@ -161,6 +179,7 @@ When the backend container starts, it runs `start.sh` which:
 4. Starts the Node.js application
 
 You'll see logs like:
+
 ```
 Generating Prisma Client...
 ✔ Generated Prisma Client (v7.1.0)
@@ -175,16 +194,19 @@ Server is running on http://localhost:3001
 ### Real-time Logs (Follow Mode)
 
 **All services:**
+
 ```bash
 npm run docker:logs
 ```
 
 **Backend only:**
+
 ```bash
 npm run docker:logs:backend
 ```
 
 **Last 50 lines:**
+
 ```bash
 docker-compose logs --tail=50 backend
 ```
@@ -192,12 +214,14 @@ docker-compose logs --tail=50 backend
 ### Log Format
 
 Backend logs include:
+
 - Timestamp
 - Log level (info, warn, error)
 - Message
 - Request/response details (method, path, status, duration)
 
 Example:
+
 ```
 2025-12-06 21:10:15 [info]: POST /internal/auth/login
 2025-12-06 21:10:15 [info]: POST /internal/auth/login 200 {"statusCode":200,"duration":"45ms"}
@@ -208,11 +232,13 @@ Example:
 ### PostgreSQL
 
 **Connect via psql:**
+
 ```bash
 docker-compose exec postgres psql -U postgres -d Innogram
 ```
 
 **Or from host:**
+
 ```bash
 psql -h localhost -p 5432 -U postgres -d Innogram
 ```
@@ -220,16 +246,19 @@ psql -h localhost -p 5432 -U postgres -d Innogram
 ### Redis
 
 **Connect via redis-cli:**
+
 ```bash
 docker-compose exec redis redis-cli
 ```
 
 **Or from host:**
+
 ```bash
 redis-cli -h localhost -p 6379
 ```
 
 **Check blacklisted tokens:**
+
 ```bash
 docker-compose exec redis redis-cli
 > KEYS blacklist:*
@@ -239,11 +268,13 @@ docker-compose exec redis redis-cli
 ### Backend Container
 
 **Execute commands in container:**
+
 ```bash
 docker-compose exec backend sh
 ```
 
 **Run Prisma commands:**
+
 ```bash
 docker-compose exec backend npx prisma studio --schema=./apps/auth_microservice/db/schema.prisma
 ```
@@ -253,22 +284,28 @@ docker-compose exec backend npx prisma studio --schema=./apps/auth_microservice/
 ### Backend Can't Connect to Database
 
 **Symptoms:**
+
 - Backend logs show connection errors
 - Health check fails
 
 **Solutions:**
+
 1. Check PostgreSQL is healthy:
+
    ```bash
    docker-compose ps
    ```
+
    Should show `(healthy)` for postgres
 
 2. Check database logs:
+
    ```bash
    docker-compose logs postgres
    ```
 
 3. Verify environment variables:
+
    ```bash
    docker-compose exec backend env | grep DB_
    ```
@@ -281,12 +318,15 @@ docker-compose exec backend npx prisma studio --schema=./apps/auth_microservice/
 ### Prisma Migration Errors
 
 **Symptoms:**
+
 - "No migration found" errors
 - Schema sync issues
 
 **Solutions:**
+
 1. The container automatically runs `prisma db push` if migrations fail
 2. To manually reset:
+
    ```bash
    docker-compose exec backend npx prisma db push --schema=./apps/auth_microservice/db/schema.prisma --accept-data-loss
    ```
@@ -299,15 +339,17 @@ docker-compose exec backend npx prisma studio --schema=./apps/auth_microservice/
 ### Port Already in Use
 
 **Symptoms:**
+
 - `bind: address already in use` error
 
 **Solutions:**
 
 **For PostgreSQL (5432):**
+
 - Change port in `docker-compose.yml`:
   ```yaml
   ports:
-    - "5433:5432"  # Use 5433 on host
+    - '5433:5432' # Use 5433 on host
   ```
 - Or stop the conflicting service:
   ```bash
@@ -318,10 +360,11 @@ docker-compose exec backend npx prisma studio --schema=./apps/auth_microservice/
   ```
 
 **For Backend (3001):**
+
 - Change port in `docker-compose.yml`:
   ```yaml
   ports:
-    - "3002:3001"  # Use 3002 on host
+    - '3002:3001' # Use 3002 on host
   ```
 - Update `.env`:
   ```
@@ -329,28 +372,34 @@ docker-compose exec backend npx prisma studio --schema=./apps/auth_microservice/
   ```
 
 **For Redis (6379):**
+
 - Change port in `docker-compose.yml`:
   ```yaml
   ports:
-    - "6380:6379"  # Use 6380 on host
+    - '6380:6379' # Use 6380 on host
   ```
 
 ### Container Keeps Restarting
 
 **Symptoms:**
+
 - Container status shows "Restarting"
 - Logs show errors
 
 **Solutions:**
+
 1. Check logs:
+
    ```bash
    docker-compose logs backend
    ```
 
 2. Check if it's a dependency issue:
+
    ```bash
    docker-compose ps
    ```
+
    Ensure postgres and redis are healthy
 
 3. Rebuild the container:
@@ -361,16 +410,20 @@ docker-compose exec backend npx prisma studio --schema=./apps/auth_microservice/
 ### Logs Not Showing in Terminal
 
 **Symptoms:**
+
 - Running `npm run docker:up` but only seeing postgres/redis logs
 
 **Solutions:**
+
 1. Ensure you're using the updated script (without `-d` flag)
 2. Check backend is running:
+
    ```bash
    docker-compose ps
    ```
 
 3. View backend logs separately:
+
    ```bash
    npm run docker:logs:backend
    ```
@@ -383,16 +436,20 @@ docker-compose exec backend npx prisma studio --schema=./apps/auth_microservice/
 ### Prisma 7 Configuration Issues
 
 **Symptoms:**
+
 - "The datasource property is required" error
 - "The datasource property `url` is no longer supported" error
 
 **Solutions:**
+
 1. Ensure `prisma.config.ts` exists at backend root
 2. Verify `DATABASE_URL` is set in environment
 3. Check Prisma version:
+
    ```bash
    docker-compose exec backend npx prisma --version
    ```
+
    Should be 7.x
 
 4. Regenerate Prisma Client:
@@ -403,15 +460,18 @@ docker-compose exec backend npx prisma studio --schema=./apps/auth_microservice/
 ## Rebuilding After Code Changes
 
 ### Quick Rebuild (Recommended)
+
 ```bash
 npm run docker:rebuild
 ```
 
 This will:
+
 1. Rebuild the backend image from scratch
 2. Restart all containers
 
 ### Manual Rebuild
+
 ```bash
 # Rebuild backend
 docker-compose build --no-cache backend
@@ -425,12 +485,14 @@ docker-compose up -d backend
 For active development, you can:
 
 1. **Mount code as volume** (add to `docker-compose.yml`):
+
    ```yaml
    backend:
      volumes:
        - ./apps:/app/apps
        - ./package.json:/app/package.json
    ```
+
    Then restart: `docker-compose restart backend`
 
 2. **Use local development** (without Docker):
@@ -443,6 +505,7 @@ For active development, you can:
 ### Volumes
 
 Data is persisted in Docker volumes:
+
 - `postgres_data` - PostgreSQL database files
 - `redis_data` - Redis persistence files
 
@@ -465,6 +528,7 @@ npm run docker:clean
 ```
 
 Or manually:
+
 ```bash
 docker-compose down -v
 ```
@@ -498,13 +562,14 @@ services:
       LOG_LEVEL: warn
     restart: always
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "5"
+        max-size: '10m'
+        max-file: '5'
 ```
 
 Then use:
+
 ```bash
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```

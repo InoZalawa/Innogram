@@ -51,6 +51,7 @@ posts_microservice/
 ## Database Schema
 
 You'll need to create Prisma models for:
+
 - `Post` - Posts table
 
 Reference the `User` model from `auth_microservice/db/schema.prisma` for relations.

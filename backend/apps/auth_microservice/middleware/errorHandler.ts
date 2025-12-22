@@ -7,11 +7,7 @@ export interface ApiError extends Error {
   status?: number;
 }
 
-export const errorHandler = (
-  err: ApiError,
-  req: Request,
-  res: Response,
-) => {
+export const errorHandler = (err: ApiError, req: Request, res: Response) => {
   const statusCode = err.statusCode || err.status || 500;
   const message = err.message || 'Internal Server Error';
 
@@ -24,9 +20,10 @@ export const errorHandler = (
 
   res.status(statusCode).json({
     success: false,
-    message: process.env.NODE_ENV === 'production' && statusCode === 500
-      ? 'Internal Server Error'
-      : message,
+    message:
+      process.env.NODE_ENV === 'production' && statusCode === 500
+        ? 'Internal Server Error'
+        : message,
     ...(process.env.NODE_ENV !== 'production' && { stack: err.stack }),
   });
 };
@@ -49,10 +46,7 @@ export const validationErrorHandler = (
   return next();
 };
 
-export const notFoundHandler = (
-  req: Request,
-  res: Response,
-) => {
+export const notFoundHandler = (req: Request, res: Response) => {
   res.status(404).json({
     success: false,
     message: `Route ${req.originalUrl} not found`,

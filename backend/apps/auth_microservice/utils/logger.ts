@@ -16,7 +16,10 @@ const logger = winston.createLogger({
         winston.format.colorize(),
         winston.format.printf(({ timestamp, level, message, ...meta }) => {
           let msg = `${timestamp} [${level}]: ${message}`;
-          if (Object.keys(meta).length > 0 && meta.service !== 'auth-microservice') {
+          if (
+            Object.keys(meta).length > 0 &&
+            meta.service !== 'auth-microservice'
+          ) {
             msg += ` ${JSON.stringify(meta)}`;
           }
           return msg;
@@ -24,10 +27,15 @@ const logger = winston.createLogger({
       ),
     }),
     // Also log to files if not in Docker
-    ...(process.env.NODE_ENV !== 'production' ? [
-      new winston.transports.File({ filename: 'error.log', level: 'error' }),
-      new winston.transports.File({ filename: 'combined.log' }),
-    ] : []),
+    ...(process.env.NODE_ENV !== 'production'
+      ? [
+          new winston.transports.File({
+            filename: 'error.log',
+            level: 'error',
+          }),
+          new winston.transports.File({ filename: 'combined.log' }),
+        ]
+      : []),
   ],
 });
 

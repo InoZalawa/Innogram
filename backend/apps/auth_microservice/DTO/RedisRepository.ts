@@ -14,7 +14,7 @@ export class RedisAuthRepository {
     if (result !== null) {
       return true;
     }
-    
+
     return false;
   }
 
@@ -40,3 +40,17 @@ export class RedisAuthRepository {
     return null;
   }
 }
+
+const redisClient = createClient({
+  url: process.env.REDIS_URL || 'redis://redis:6379',
+});
+
+redisClient.on('error', (err) => console.error('Redis Client Error', err));
+
+(async () => {
+  await redisClient.connect();
+})();
+
+const RedisAuthInstance = new RedisAuthRepository(redisClient);
+
+export default RedisAuthInstance as RedisAuthRepository;

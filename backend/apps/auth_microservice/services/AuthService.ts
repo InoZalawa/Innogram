@@ -5,6 +5,9 @@ import { SignUpDto } from '../DTO/SignUpDTO';
 import { LogInDTO } from '../DTO/LogInDTO';
 import prisma from '../db/prismaClient';
 import logger from '../utils/logger';
+import RedisAuth from '../DTO/RedisRepository';
+import axios from 'axios';
+import { GoogleUserInfo, GoogleTokenResponse } from '../types/GoogleResponse';
 
 env.config();
 
@@ -13,12 +16,17 @@ if (!JWT_KEY) {
   throw new Error('JWT_KEY environment variable is not set');
 }
 
-const ACCESS_TOKEN_EXPIRY = parseInt(process.env.ACCESS_TOKEN_EXPIRY || '180', 10); // 3 minutes default
-const REFRESH_TOKEN_EXPIRY = parseInt(process.env.REFRESH_TOKEN_EXPIRY || '600', 10); // 10 minutes default
+const ACCESS_TOKEN_EXPIRY = parseInt(
+  process.env.ACCESS_TOKEN_EXPIRY || '180',
+  10
+); // 3 minutes default
+const REFRESH_TOKEN_EXPIRY = parseInt(
+  process.env.REFRESH_TOKEN_EXPIRY || '600',
+  10
+); // 10 minutes default
 
 export const registerUser = async (signUpDto: SignUpDto) => {
   try {
-    // Validate password match
     if (signUpDto.password !== signUpDto.repeatPassword) {
       logger.warn('Registration failed: passwords do not match');
       return {
@@ -28,10 +36,9 @@ export const registerUser = async (signUpDto: SignUpDto) => {
       };
     }
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       const encryptedPassword = await bcrypt.hash(signUpDto.password, 12);
 
-      // Check if user already exists
       const existingUser = await tx.user.findFirst({
         where: {
           OR: [{ email: signUpDto.email }, { username: signUpDto.username }],
@@ -39,7 +46,9 @@ export const registerUser = async (signUpDto: SignUpDto) => {
       });
 
       if (existingUser) {
-        logger.warn(`Registration failed: user already exists - ${signUpDto.email}`);
+        logger.warn(
+          `Registration failed: user already exists - ${signUpDto.email}`
+        );
         return {
           success: false,
           status: 409,
@@ -76,41 +85,200 @@ export const registerUser = async (signUpDto: SignUpDto) => {
 };
 
 export const logInUser = async (logInDto: LogInDTO) => {
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [{ username: logInDto.login }, { email: logInDto.login }],
+    },
+  });
+
+  if (!user || !(await bcrypt.compare(logInDto.password, user.password))) {
+    return {
+      success: false,
+      status: 401,
+      message: 'Invalid email or password',
+    };
+  }
+
+  const tokenPayload = { userId: user.id, sub: user.email };
+  const accessToken = jwt.sign(tokenPayload, JWT_KEY!, {
+    expiresIn: ACCESS_TOKEN_EXPIRY,
+  });
+  const refreshToken = jwt.sign(tokenPayload, JWT_KEY!, {
+    expiresIn: REFRESH_TOKEN_EXPIRY,
+  });
+
   try {
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [{ username: logInDto.login }, { email: logInDto.login }],
-      },
+    await RedisAuth.storeRefreshTokenId(user.id.toString(), refreshToken);
+  } catch (err) {
+    logger.error('Failed to store session in Redis:', err);
+  }
+
+  return {
+    success: true,
+    status: 200,
+    accessToken,
+    refreshToken,
+    user: { id: user.id, email: user.email, username: user.username },
+  };
+};
+
+export const refreshAccessToken = async (oldRefreshToken: string) => {
+  try {
+    const decoded = jwt.verify(oldRefreshToken, JWT_KEY!) as {
+      userId: number;
+      sub: string;
+    };
+
+    const userIdFromRedis = await RedisAuth.findSessionByTokenId(
+      oldRefreshToken
+    );
+    if (!userIdFromRedis || userIdFromRedis !== decoded.userId.toString()) {
+      return {
+        success: false,
+        status: 401,
+        message: 'Session expired or invalid',
+      };
+    }
+
+    const tokenPayload = { userId: decoded.userId, sub: decoded.sub };
+    const newAccessToken = jwt.sign(tokenPayload, JWT_KEY!, {
+      expiresIn: ACCESS_TOKEN_EXPIRY,
+    });
+    const newRefreshToken = jwt.sign(tokenPayload, JWT_KEY!, {
+      expiresIn: REFRESH_TOKEN_EXPIRY,
+    });
+
+    await RedisAuth.storeRefreshTokenId(
+      decoded.userId.toString(),
+      newRefreshToken
+    );
+
+    await RedisAuth.blacklistToken(oldRefreshToken, REFRESH_TOKEN_EXPIRY);
+
+    return {
+      success: true,
+      status: 200,
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
+  } catch {
+    return {
+      success: false,
+      status: 401,
+      message: 'Invalid refresh token',
+    };
+  }
+};
+export const handleLogout = async (
+  userId: number,
+  refreshToken: string,
+  accessToken?: string
+) => {
+  try {
+    const user = await RedisAuth.findSessionByTokenId(refreshToken);
+
+    if (user === null) {
+      return { success: false, status: 400, message: 'Invalid refresh token' };
+    }
+    if (Number(user) !== userId) {
+      logger.warn(
+        `Security alert: ${userId} tried to logout session of ${user}`
+      );
+      return { success: false, status: 403, message: 'Access denied' };
+    }
+
+    if (accessToken) {
+      await RedisAuth.blacklistToken(accessToken, ACCESS_TOKEN_EXPIRY);
+    }
+
+    return { success: true, status: 200, message: 'Logged out successfully' };
+  } catch {
+    logger.error('Logout error');
+    return { success: false, status: 500, message: 'Internal server error' };
+  }
+};
+
+export const validateToken = async (accessToken: string) => {
+  try {
+    const decoded = jwt.verify(accessToken, JWT_KEY!);
+
+    const isBlacklisted = await RedisAuth.isTokenBlacklisted(accessToken);
+
+    if (isBlacklisted) {
+      return {
+        success: false,
+        code: 401,
+        message: 'Token has been invalidated (logged out)',
+      };
+    }
+
+    return { success: true, code: 200, decoded };
+  } catch (err) {
+    return { success: false, code: 401, error: err };
+  }
+};
+
+export const exchangeCodeForTokens = async (
+  code: string
+): Promise<GoogleUserInfo> => {
+  const tokenResponse = await axios.post<GoogleTokenResponse>(
+    'https://oauth2.googleapis.com/token',
+    {
+      code,
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
+      redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+      grant_type: 'authorization_code',
+    }
+  );
+
+  const { access_token } = tokenResponse.data;
+
+  const userResponse = await axios.get(
+    'https://www.googleapis.com/oauth2/v2/userinfo',
+    {
+      headers: { Authorization: `Bearer ${access_token}` },
+    }
+  );
+
+  return userResponse.data as GoogleUserInfo;
+};
+
+export const handleGoogleAuth = async (googleProfile: {
+  id: string;
+  gmail: string;
+  verified_email: boolean;
+}) => {
+  if (!googleProfile.verified_email) {
+    logger.error('Google email not verified');
+    return {
+      success: false,
+      status: 400,
+      message: 'Google email not verified',
+    };
+  }
+  googleProfile.gmail = googleProfile.gmail.toLowerCase();
+  try {
+    let user = await prisma.user.findUnique({
+      where: { email: googleProfile.gmail },
     });
 
     if (!user) {
-      logger.warn(`Login failed: user not found - ${logInDto.login}`);
-      return {
-        success: false,
-        status: 401,
-        message: 'Invalid credentials',
-      };
+      const newRandomPassword = await bcrypt.hash(Math.random().toString(), 12);
+      user = await prisma.user.create({
+        data: {
+          email: googleProfile.gmail,
+          password: newRandomPassword,
+          username:
+            googleProfile.gmail.split('@')[0] +
+            '_' +
+            googleProfile.id.slice(0, 6),
+        },
+      });
+      logger.info(`New user registered via Google: ${user.email}`);
     }
 
-    const arePasswordsMatching = await bcrypt.compare(
-      logInDto.password,
-      user.password
-    );
-
-    if (!arePasswordsMatching) {
-      logger.warn(`Login failed: invalid password for user - ${user.email}`);
-      return {
-        success: false,
-        status: 401,
-        message: 'Invalid credentials',
-      };
-    }
-
-    const tokenPayload = {
-      userId: user.id,
-      sub: user.email,
-    };
-
+    const tokenPayload = { userId: user.id, sub: user.email };
     const accessToken = jwt.sign(tokenPayload, JWT_KEY, {
       issuer: 'innogram-auth-service',
       expiresIn: ACCESS_TOKEN_EXPIRY,
@@ -121,235 +289,49 @@ export const logInUser = async (logInDto: LogInDTO) => {
       expiresIn: REFRESH_TOKEN_EXPIRY,
     });
 
-    const expiresAt = new Date();
-    expiresAt.setSeconds(expiresAt.getSeconds() + REFRESH_TOKEN_EXPIRY);
-
-    await prisma.refreshToken.create({
-      data: {
-        token: refreshToken,
-        userId: user.id,
-        expiresAt,
-      },
-    });
-
-    logger.info(`User logged in successfully: ${user.email}`);
+    try {
+      await RedisAuth.storeRefreshTokenId(user.id.toString(), refreshToken);
+    } catch (redisErr) {
+      logger.error('Redis session storage failed', redisErr);
+    }
 
     return {
       success: true,
       status: 200,
-      message: 'Login successful',
       accessToken,
       refreshToken,
+      user: { id: user.id, email: user.email, username: user.username },
     };
   } catch (err) {
-    logger.error('Login error:', err);
-    return {
-      success: false,
-      status: 500,
-      message: 'Login failed. Please try again later.',
-    };
-  }
-};
-
-export const refreshAccessToken = async (refreshToken: string) => {
-  try {
-    // Verify refresh token
-    const decoded = jwt.verify(refreshToken, JWT_KEY) as {
-      userId: number;
-      sub: string;
-    };
-
-    // Check if token exists in database
-    const tokenRecord = await prisma.refreshToken.findUnique({
-      where: { token: refreshToken },
-    });
-
-    if (!tokenRecord) {
-      logger.warn('Refresh token not found in database');
-      return {
-        success: false,
-        status: 401,
-        message: 'Invalid refresh token',
-      };
-    }
-
-    // Check if token is expired
-    if (new Date() > tokenRecord.expiresAt) {
-      // Clean up expired token
-      await prisma.refreshToken.delete({
-        where: { token: refreshToken },
-      });
-      logger.warn('Refresh token expired');
-      return {
-        success: false,
-        status: 401,
-        message: 'Refresh token expired',
-      };
-    }
-
-    // Generate new access token
-    const tokenPayload = {
-      userId: decoded.userId,
-      sub: decoded.sub,
-    };
-
-    const accessToken = jwt.sign(tokenPayload, JWT_KEY, {
-      issuer: 'innogram-auth-service',
-      expiresIn: ACCESS_TOKEN_EXPIRY,
-    });
-
-    logger.info(`Access token refreshed for user: ${decoded.sub}`);
-
-    return {
-      success: true,
-      status: 200,
-      message: 'Token refreshed successfully',
-      accessToken,
-    };
-  } catch (err) {
-    logger.error('Token refresh error:', err);
-    return {
-      success: false,
-      status: 401,
-      message: 'Invalid or expired refresh token',
-    };
-  }
-};
-
-// TODO: Implement logout functionality
-// This function should:
-// 1. Delete the refresh token from the database
-// 2. Blacklist the access token in Redis (if provided)
-// 3. Return success response
-// 
-// Example implementation:
-// export const logoutUser = async (refreshToken: string, accessToken?: string) => {
-//   try {
-//     // Delete refresh token from database
-//     await prisma.refreshToken.deleteMany({
-//       where: { token: refreshToken },
-//     });
-//
-//     // Blacklist access token in Redis if provided
-//     if (accessToken) {
-//       try {
-//         const redisClient = await getRedisClient();
-//         const redisRepo = new RedisAuthRepository(redisClient);
-//         await redisRepo.blacklistToken(accessToken, ACCESS_TOKEN_EXPIRY);
-//       } catch (redisErr) {
-//         logger.warn('Redis not available, skipping token blacklist:', redisErr);
-//       }
-//     }
-//
-//     logger.info('User logged out successfully');
-//     return {
-//       success: true,
-//       status: 200,
-//       message: 'Logout successful',
-//     };
-//   } catch (err) {
-//     logger.error('Logout error:', err);
-//     return {
-//       success: false,
-//       status: 500,
-//       message: 'Logout failed. Please try again later.',
-//     };
-//   }
-// };
-
-// TODO: Implement Google OAuth authentication
-// This function should handle Google OAuth callback and create/login user
-//
-// export const handleGoogleAuth = async (googleProfile: {
-//   id: string;
-//   email: string;
-//   name?: string;
-//   picture?: string;
-// }) => {
-//   try {
-//     // Check if user exists by email
-//     let user = await prisma.user.findUnique({
-//       where: { email: googleProfile.email },
-//     });
-//
-//     // If user doesn't exist, create new user
-//     if (!user) {
-//       // Generate a random password (user won't use it, but required by schema)
-//       const randomPassword = await bcrypt.hash(Math.random().toString(), 12);
-//       user = await prisma.user.create({
-//         data: {
-//           email: googleProfile.email,
-//           username: googleProfile.email.split('@')[0] + '_' + googleProfile.id.slice(0, 6),
-//           password: randomPassword, // User won't use password auth
-//         },
-//       });
-//       logger.info(`New user registered via Google: ${googleProfile.email}`);
-//     }
-//
-//     // Generate JWT tokens (same as regular login)
-//     const tokenPayload = {
-//       userId: user.id,
-//       sub: user.email,
-//     };
-//
-//     const accessToken = jwt.sign(tokenPayload, JWT_KEY, {
-//       issuer: 'innogram-auth-service',
-//       expiresIn: ACCESS_TOKEN_EXPIRY,
-//     });
-//
-//     const refreshToken = jwt.sign(tokenPayload, JWT_KEY, {
-//       issuer: 'innogram-auth-service',
-//       expiresIn: REFRESH_TOKEN_EXPIRY,
-//     });
-//
-//     const expiresAt = new Date();
-//     expiresAt.setSeconds(expiresAt.getSeconds() + REFRESH_TOKEN_EXPIRY);
-//
-//     await prisma.refreshToken.create({
-//       data: {
-//         token: refreshToken,
-//         userId: user.id,
-//         expiresAt,
-//       },
-//     });
-//
-//     return {
-//       success: true,
-//       status: 200,
-//       message: 'Google authentication successful',
-//       accessToken,
-//       refreshToken,
-//       user: {
-//         id: user.id,
-//         email: user.email,
-//         username: user.username,
-//       },
-//     };
-//   } catch (err) {
-//     logger.error('Google auth error:', err);
-//     return {
-//       success: false,
-//       status: 500,
-//       message: 'Google authentication failed',
-//     };
-//   }
-// };
-
-// Cleanup expired refresh tokens (should be run periodically)
-export const cleanupExpiredTokens = async () => {
-  try {
-    const result = await prisma.refreshToken.deleteMany({
-      where: {
-        expiresAt: {
-          lt: new Date(),
-        },
-      },
-    });
-
-    logger.info(`Cleaned up ${result.count} expired refresh tokens`);
-    return result.count;
-  } catch (err) {
-    logger.error('Token cleanup error:', err);
+    logger.error('Google auth error:', err);
     throw err;
   }
+};
+
+export const handleOAuthCallback = async (code: string) => {
+  const googleProfile = await exchangeCodeForTokens(code);
+  const isVerified =
+    googleProfile.verified_email ?? (googleProfile as any).email_verified;
+  return await handleGoogleAuth({
+    id: googleProfile.id,
+    gmail: googleProfile.email,
+    verified_email: isVerified,
+  });
+};
+
+export const initiateOAuthFlow = async () => {
+  const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
+  const options = {
+    redirect_uri: process.env.GOOGLE_REDIRECT_URI!,
+    client_id: process.env.GOOGLE_CLIENT_ID!,
+    access_type: 'offline',
+    response_type: 'code',
+    prompt: 'consent',
+    scope: [
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile',
+    ].join(' '),
+  };
+  //logger.info(`${rootUrl}?${new URLSearchParams(options).toString()}`)
+  return `${rootUrl}?${new URLSearchParams(options).toString()}`;
 };

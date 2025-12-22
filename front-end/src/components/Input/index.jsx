@@ -21,9 +21,9 @@ const Input = forwardRef(
     const errorId = `${inputId}-errors`;
     const helperId = helperText ? `${inputId}-helper` : undefined;
     const hasErrors = errors.length > 0;
-    const describedBy = [hasErrors ? errorId : null, helperId]
-      .filter(Boolean)
-      .join(" ") || undefined;
+    const describedBy =
+      [hasErrors ? errorId : null, helperId].filter(Boolean).join(" ") ||
+      undefined;
 
     return (
       <div className={`form-field ${className}`.trim()}>
