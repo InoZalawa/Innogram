@@ -1,12 +1,12 @@
 import { Controller, Get, Post, Param, UseGuards } from '@nestjs/common';
-import { AuthGuard } from './posts.module';
+import { IsLoggedInGuard, IsPostOwnerGuard } from './posts.service';
 import { PostDTO } from './DTO/PostDTO';
 import { handleCreatePost } from './posts.service';
 @Controller('posts')
 export class PostsController {
 
   @Get('create')
-  @UseGuards(AuthGuard)
+  @UseGuards(IsLoggedInGuard)
   async createPost(@Param() postData: PostDTO) {
     await handleCreatePost(postData);
     return { message: 'Post created' };
@@ -23,6 +23,7 @@ export class PostsController {
   }
 
   @Post(':id/edit')
+  @UseGuards(IsLoggedInGuard, IsPostOwnerGuard)
   editPostById() {
     return { message: 'Edit post by ID' };
   }
