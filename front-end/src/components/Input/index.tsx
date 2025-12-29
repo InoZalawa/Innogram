@@ -1,6 +1,20 @@
 import { forwardRef } from "react";
 
-const Input = forwardRef(
+interface InputProps {
+  label?: string;
+  name?: string;
+  type?: string;
+  value?: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  errors?: string[];
+  helperText?: string;
+  required?: boolean;
+  placeholder?: string;
+  className?: string;
+}
+
+
+const Input = forwardRef<HTMLInputElement, InputProps>(
   (
     {
       label,
@@ -11,7 +25,7 @@ const Input = forwardRef(
       errors = [],
       helperText,
       required = false,
-      placeholder,
+      placeholder = "",
       className = "",
     },
     ref,

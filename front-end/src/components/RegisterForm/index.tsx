@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 
-import { Input } from "../../components";
+import { Input } from "..";
 
 // Simple-but-sane email check (no backtracking heavy regexes needed here).
 const mailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -29,7 +29,7 @@ const mailValidationArr = [
 ];
 
 // Reusable helper so we always validate with fresh values (avoids stale state).
-const validateAgainstRules = (validationArr, value) =>
+const validateAgainstRules : (validationArr: { regex: RegExp; message: string }[], value: string) => string[] = (validationArr, value) =>
   validationArr
     .filter((criterion) => !criterion.regex.test(value))
     .map((criterion) => criterion.message);
@@ -40,13 +40,13 @@ const RegisterForm = () => {
   const [repeatPassword, setRepeatPassword] = useState("");
   const [mail, setMail] = useState("");
 
-  const [passwordErrors, setPasswordError] = useState([]);
-  const [repeatedPasswordError, setRepeatedPasswordError] = useState([]);
-  const [usernameError, setUsernameError] = useState([]);
-  const [mailError, setMailError] = useState([]);
+  const [passwordErrors, setPasswordError] = useState<string[]>([]);
+  const [repeatedPasswordError, setRepeatedPasswordError] = useState<string[]>([]);
+  const [usernameError, setUsernameError] = useState<string[]>([]);
+  const [mailError, setMailError] = useState<string[]>([]);
   const [formError, setFormError] = useState("");
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e : React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setFormError("");
 
@@ -80,7 +80,7 @@ const RegisterForm = () => {
     if (hasErrors) return;
 
     try {
-      const response = await axios.post("/auth/signup", {
+      const response = await axios.post("/internal/auth/register", {
         password,
         username: trimmedUsername,
         email: trimmedMail,
