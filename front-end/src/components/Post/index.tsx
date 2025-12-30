@@ -1,36 +1,61 @@
 import CommentBox from "../CommentBox";
+import AttachmentCarousel from "../AttachmentsCarousel";
 import React from "react";
+import { Attachment } from "../../DTO/AttachmentDTO";
 
 interface PostProps {
   author: string;
   contacts?: string[];
   description?: string;
-};
-const Post : React.FC<PostProps> = ({author, contacts,description}) => {
-  const [isLiked, setIsLiked] = React.useState(false);  
+  attachments?: string[];
+  likes?: number;
+}
+const Post: React.FC<PostProps> = ({
+  author,
+  contacts,
+  description,
+  attachments,
+  likes,
+}) => {
+  const [isLiked, setIsLiked] = React.useState(false);
+  const [likedByText, setLikedByText] = React.useState("");
+  React.useEffect(() => {
+    if (isLiked) {
+      setLikedByText(
+        `Liked by You${contacts && contacts.length > 0 ? ` and ${likes} others` : ""}`,
+      );
+    } else {
+      setLikedByText(
+        contacts && contacts.length > 0
+          ? `Liked by ${contacts[0]}${contacts.length > 1 ? ` and ${likes} others` : ""}`
+          : "",
+      );
+    }
+  }, [isLiked, contacts]); // TODO: add flexibility for text based on likes count and contacts length
 
-
-  const likedByText = "temp" //TODO: replace with generating text depeding on who liked the post author friends, amount of likes, etc.
   return (
     <div>
-      <img src="https://via.placeholder.com/150" alt="Post Image" />
+      {attachments && attachments.length > 0 && (
+        <AttachmentCarousel
+          attachments={attachments.map((att) => new Attachment(att, "image"))}
+        />
+      )}
       <div>
         <div>
-        <button onClick={() => setIsLiked(!isLiked)}>like</button>
-        <button>comment</button> 
-        <button>share</button>
+          <button onClick={() => setIsLiked(!isLiked)}>like</button>
+          <button>comment</button>
+          <button>share</button>
         </div>
         <div>
-        <button>save</button>
+          <button>save</button>
         </div>
       </div>
       <div className="LikedBy">{likedByText}</div>
       <div className="Description">{description}</div>
-      
-      <CommentBox author={author}/>
 
+      <CommentBox author={author} />
     </div>
   );
-}
+};
 
 export default Post;

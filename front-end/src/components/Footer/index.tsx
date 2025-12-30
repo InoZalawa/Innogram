@@ -1,4 +1,4 @@
-const Footer : React.FC = () => {
+const Footer: React.FC = () => {
   return (
     <footer>
       <p>Footer placeholder</p>

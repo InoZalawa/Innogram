@@ -1,77 +1,106 @@
-// import { PrismaClient } from '@prisma/client';
-
-import { PostDTO } from "./DTO/PostDTO";
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import prisma from '../../../auth_microservice/db/prismaClient';
+import { PrismaService } from '../prisma/prisma.service';
+import { PostDTO } from './DTO/PostDTO';
 
 @Injectable()
-export class IsLoggedInGuard implements CanActivate { //in order to create post(check if user is logged in)
+export class IsLoggedInGuard implements CanActivate {
   constructor() {}
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
-    try{
-    // TODO: implement proper authentication check
-    }
-    catch{
+    try {
+      // TODO: implement proper authentication check
+      return true; // Placeholder
+    } catch {
       return false;
     }
-    return true;
   }
 }
 
-
-@Injectable() 
-export class IsPostOwnerGuard implements CanActivate { //in order to edit post (check if user is author)
+@Injectable()
+export class IsPostOwnerGuard implements CanActivate {
   constructor(private prisma: PrismaService) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const postID = request.params.id;
-    const user = await prisma.user.findUnique({
-      where: { id: request.userId },
-    });
-    if (!user || !postID) {
+    const userId = request.user?.id; // Assuming user is set by auth middleware
+    if (!userId || !postID) {
       return false;
     }
-    const post = await prisma.post.findUnique({
+    const post = await this.prisma.post.findUnique({
       where: { id: postID },
     });
     if (!post) {
       return false;
     }
-    if (post.authorId !== user.id) {
-      return false;
-    }
-    return true;
+    return post.authorId === userId;
   }
 }
 
-export const handleCreatePost = async (postData: PostDTO) => {
-  try {
-    // Logic to create a post in the database
-    await prisma.post.upsert({
-      data: {
-        content: postData.content,
-        authorId: postData.authorId,
-        attachments: postData.attachments,
-        comments: [],
+@Injectable()
+export class PostsService {
+  constructor(private prisma: PrismaService) {}
+
+  async createPost(postData: PostDTO) {
+    try {
+      const post = await this.prisma.post.create({
+        data: {
+          content: postData.content,
+          authorId: postData.authorId,
+          attachments: {
+            create:
+              postData.attachments?.map((att) => ({
+                type: att.type,
+                file: att.file,
+              })) || [],
+          },
+        },
+      });
+      return { message: 'Post created', post };
+    } catch {
+      throw new Error('Failed to create post');
+    }
+  }
+
+  async updatePost(postId: string, updatedData: Partial<PostDTO>) {
+    try {
+      const post = await this.prisma.post.update({
+        where: { id: postId },
+        data: {
+          content: updatedData.content,
+          attachments: updatedData.attachments
+            ? {
+                deleteMany: {},
+                create: updatedData.attachments.map((att) => ({
+                  type: att.type,
+                  file: att.file,
+                })),
+              }
+            : undefined,
+        },
+      });
+      return { message: 'Post updated', post };
+    } catch (error) {
+      return { message: 'Failed to update post' };
+    }
+  }
+
+  async getPostById(id: string) {
+    return this.prisma.post.findUnique({
+      where: { id },
+      include: {
+        attachments: true,
+        comments: {
+          include: {
+            author: true,
+          },
+        },
+        author: true,
       },
     });
-  } catch (error) {
-    throw new Error('Failed to create post');
-    return { message: 'Failed to create post' };
   }
-  return { message: 'Post created' };
-}
 
-export const handleUpdatePost = async (postId: string, updatedData: Partial<PostDTO>) => {
-  try {    
-    await prisma.post.update({
-      where: { id: postId },
-      data: updatedData,
-    });
-
-    return { message: 'Post updated' };
-  } catch () {
-    return { message: 'Failed to update post' };
+  async getArchivedPosts() {
+    // Implement logic for archived posts if needed
+    return [];
   }
 }

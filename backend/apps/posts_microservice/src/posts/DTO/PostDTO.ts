@@ -1,9 +1,9 @@
-export class CommentDTO{
+export class CommentDTO {
   public constructor(
     readonly postId: string,
     readonly commentId: string,
     readonly content: string,
-    readonly authorId: string,
+    readonly authorId: string
   ) {
     this.postId = postId;
     this.commentId = commentId;
@@ -12,12 +12,17 @@ export class CommentDTO{
   }
 }
 
-export class PostDTO{
+export interface AttachmentDTO {
+  type: string; // "image" or "video"
+  file: string; // URL or path
+}
+
+export class PostDTO {
   public constructor(
     readonly postId: string,
     readonly content: string,
     readonly authorId: string,
-    readonly attachments?: Blob[], //idk what type to use here
+    readonly attachments?: AttachmentDTO[],
     readonly comments?: CommentDTO[]
   ) {
     this.postId = postId;

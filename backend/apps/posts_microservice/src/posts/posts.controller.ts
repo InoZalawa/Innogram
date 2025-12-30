@@ -1,30 +1,37 @@
-import { Controller, Get, Post, Param, UseGuards } from '@nestjs/common';
-import { IsLoggedInGuard, IsPostOwnerGuard } from './posts.service';
+import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import {
+  IsLoggedInGuard,
+  IsPostOwnerGuard,
+  PostsService,
+} from './posts.service';
 import { PostDTO } from './DTO/PostDTO';
-import { handleCreatePost } from './posts.service';
+
 @Controller('posts')
 export class PostsController {
+  constructor(private readonly postsService: PostsService) {}
 
-  @Get('create')
+  @Post('create')
   @UseGuards(IsLoggedInGuard)
-  async createPost(@Param() postData: PostDTO) {
-    await handleCreatePost(postData);
-    return { message: 'Post created' };
+  async createPost(@Body() postData: PostDTO) {
+    return this.postsService.createPost(postData);
   }
 
   @Get('archived')
-  getArchivedPosts() {
-    return { message: 'Archived posts' };
+  async getArchivedPosts() {
+    return this.postsService.getArchivedPosts();
   }
 
   @Get(':id')
-  getPostById() {
-    return { message: 'View post by ID' };
+  async getPostById(@Param('id') id: string) {
+    return this.postsService.getPostById(id);
   }
 
   @Post(':id/edit')
   @UseGuards(IsLoggedInGuard, IsPostOwnerGuard)
-  editPostById() {
-    return { message: 'Edit post by ID' };
+  async editPostById(
+    @Param('id') id: string,
+    @Body() updatedData: Partial<PostDTO>
+  ) {
+    return this.postsService.updatePost(id, updatedData);
   }
-} 
+}

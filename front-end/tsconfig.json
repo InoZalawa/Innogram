@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "useDefineForClassFields": true,
-    "lib": ["DOM", "DOM.Iterable", "ESNext"], 
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "module": "ESNext",
     "skipLibCheck": true,
 
@@ -15,8 +15,8 @@
     "jsx": "react-jsx",
 
     /* Migration & JS Support */
-    "allowJs": true,          
-    "checkJs": false,   
+    "allowJs": true,
+    "checkJs": false,
     "esModuleInterop": true,
 
     /* Strictness */
@@ -27,6 +27,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],          
+  "include": ["src"],
   "exclude": ["node_modules"]
 }

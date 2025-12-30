@@ -29,7 +29,10 @@ const mailValidationArr = [
 ];
 
 // Reusable helper so we always validate with fresh values (avoids stale state).
-const validateAgainstRules : (validationArr: { regex: RegExp; message: string }[], value: string) => string[] = (validationArr, value) =>
+const validateAgainstRules: (
+  validationArr: { regex: RegExp; message: string }[],
+  value: string,
+) => string[] = (validationArr, value) =>
   validationArr
     .filter((criterion) => !criterion.regex.test(value))
     .map((criterion) => criterion.message);
@@ -41,12 +44,14 @@ const RegisterForm = () => {
   const [mail, setMail] = useState("");
 
   const [passwordErrors, setPasswordError] = useState<string[]>([]);
-  const [repeatedPasswordError, setRepeatedPasswordError] = useState<string[]>([]);
+  const [repeatedPasswordError, setRepeatedPasswordError] = useState<string[]>(
+    [],
+  );
   const [usernameError, setUsernameError] = useState<string[]>([]);
   const [mailError, setMailError] = useState<string[]>([]);
   const [formError, setFormError] = useState("");
 
-  const handleSubmit = async (e : React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setFormError("");
 
