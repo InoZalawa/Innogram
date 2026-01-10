@@ -1,34 +1,44 @@
-export class CommentDTO {
-  public constructor(
-    readonly postId: string,
-    readonly commentId: string,
-    readonly content: string,
-    readonly authorId: string
-  ) {
-    this.postId = postId;
-    this.commentId = commentId;
-    this.content = content;
-    this.authorId = authorId;
-  }
-}
-
-export interface AttachmentDTO {
-  type: string; // "image" or "video"
-  file: string; // URL or path
-}
+import {IsNotEmpty,IsString, IsOptional, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { AttachmentDTO } from './AttachmentDTO';
+import { CommentDTO } from './CommentDTO';
 
 export class PostDTO {
+  @IsNotEmpty()
+  @IsString()
+  readonly postId: string;
+
+  @IsNotEmpty()
+  @IsString()
+  readonly content: string;
+
+  @IsNotEmpty()
+  @IsString()
+  readonly authorId: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AttachmentDTO)
+  readonly attachments?: AttachmentDTO[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CommentDTO)
+  readonly comments?: CommentDTO[];
+
   public constructor(
-    readonly postId: string,
-    readonly content: string,
-    readonly authorId: string,
-    readonly attachments?: AttachmentDTO[],
-    readonly comments?: CommentDTO[]
+    postId: string,
+    content: string,
+    authorId: string,
+    attachments?: AttachmentDTO[],
+    comments?: CommentDTO[]
   ) {
     this.postId = postId;
-    this.attachments = attachments;
     this.content = content;
     this.authorId = authorId;
+    this.attachments = attachments;
     this.comments = comments;
   }
 }

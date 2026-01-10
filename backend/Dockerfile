@@ -12,8 +12,10 @@ RUN npm ci
 # Generate Prisma Client
 FROM deps AS prisma
 COPY apps/auth_microservice/db/schema.prisma ./apps/auth_microservice/db/
+COPY apps/posts_microservice/src/prisma/schema.prisma ./apps/posts_microservice/src/prisma/
 COPY tsconfig.json tsconfig.base.json ./
 RUN npx prisma generate --schema=./apps/auth_microservice/db/schema.prisma
+RUN npx prisma generate --schema=./apps/posts_microservice/src/prisma/schema.prisma
 
 # Build the application
 FROM base AS builder
@@ -38,7 +40,6 @@ RUN adduser --system --uid 1001 nodejs
 
 # Copy necessary files
 COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=prisma --chown=nodejs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --chown=nodejs:nodejs package.json ./
 COPY --chown=nodejs:nodejs tsconfig.json tsconfig.base.json ./
 COPY --chown=nodejs:nodejs prisma.config.ts ./

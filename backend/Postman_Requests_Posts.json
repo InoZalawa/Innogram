@@ -1,0 +1,92 @@
+{
+  "info": {
+    "name": "Posts Microservice Test",
+    "description": "Test requests for creating posts in posts_microservice",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Post - Valid",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"postId\": \"123\",\n  \"content\": \"This is a test post\",\n  \"authorId\": \"user456\",\n  \"attachments\": [\n    {\n      \"type\": \"image\",\n      \"file\": \"http://example.com/image.jpg\"\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3002/posts/create",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3002",
+          "path": ["posts", "create"]
+        }
+      }
+    },
+    {
+      "name": "Create Post - Invalid (Missing content)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"postId\": \"123\",\n  \"authorId\": \"user456\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3002/posts/create",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3002",
+          "path": ["posts", "create"]
+        }
+      }
+    },
+    {
+      "name": "Create Post - Invalid (Content not string)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"postId\": \"123\",\n  \"content\": 12345,\n  \"authorId\": \"user456\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3002/posts/create",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3002",
+          "path": ["posts", "create"]
+        }
+      }
+    },
+    {
+      "name": "Get Post by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3002/posts/123",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3002",
+          "path": ["posts", "123"]
+        }
+      }
+    }
+  ]
+}

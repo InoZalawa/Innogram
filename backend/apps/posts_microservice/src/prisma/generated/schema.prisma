@@ -14,6 +14,7 @@ model Post {
   author      User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
   attachments Attachment[]
   comments    Comment[]
+  isArchived  Boolean      @default(false)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -21,11 +22,11 @@ model Post {
 }
 
 model Attachment {
-  id     String @id @default(cuid())
+  id     String  @id @default(cuid())
   type   String // "image" or "video"
   file   String // URL or path to the file
-  postId String
-  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String?
+  post   Post?   @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@map("attachments")
 }
