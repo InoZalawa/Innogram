@@ -1,8 +1,8 @@
-import { 
-  Injectable, 
-  NotFoundException, 
+import {
+  Injectable,
+  NotFoundException,
   InternalServerErrorException,
-  BadRequestException 
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PostDTO } from './DTO/PostDTO';
@@ -21,10 +21,11 @@ export class PostsService {
           content: postData.content,
           authorId: postData.authorId,
           attachments: {
-            create: postData.attachments?.map((att) => ({
-              type: att.type,
-              file: att.file,
-            })) || [],
+            create:
+              postData.attachments?.map((att) => ({
+                type: att.type,
+                file: att.file,
+              })) || [],
           },
         },
       });
@@ -93,7 +94,9 @@ export class PostsService {
       return { message: 'Post deleted successfully' };
     } catch (err) {
       logger.error('Error deleting post:', err);
-      throw new NotFoundException(`Post with ID ${id} not found or already deleted`);
+      throw new NotFoundException(
+        `Post with ID ${id} not found or already deleted`
+      );
     }
   }
 
@@ -120,7 +123,9 @@ export class PostsService {
       });
     } catch (err) {
       logger.error('Error adding comment:', err);
-      throw new BadRequestException('Could not add comment. Check if Post and Author exist.');
+      throw new BadRequestException(
+        'Could not add comment. Check if Post and Author exist.'
+      );
     }
   }
 }

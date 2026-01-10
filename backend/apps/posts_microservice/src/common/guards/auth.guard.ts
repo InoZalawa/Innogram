@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext} from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 //import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()

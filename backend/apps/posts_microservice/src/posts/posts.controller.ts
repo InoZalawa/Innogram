@@ -1,21 +1,21 @@
-import { 
+import {
   Controller,
-   Get,
-    Post,
-     Body,
-      Param,
-        UseGuards,
-        Patch,
-         Delete, 
-         UseFilters} from '@nestjs/common';
-import {PostsService,} from './posts.service';
+  Get,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Patch,
+  Delete,
+  UseFilters,
+} from '@nestjs/common';
+import { PostsService } from './posts.service';
 import { PostDTO } from './DTO/PostDTO';
 import { CommentDTO } from './DTO/CommentDTO';
 import { HttpExceptionFilter } from '../common/filters/http.filter';
 import { PostNotArchivedGuard as IsArchived } from '../common/guards/post-not-archived.guard';
 //import { AuthGuard as IsLoggedInGuard } from '../common/guards/auth.guard';
 //import { IsAuthorGuard as IsPostOwnerGuard } from '../common/guards/is-author.guard';
-
 
 @Controller('posts')
 @UseFilters(HttpExceptionFilter)
@@ -48,7 +48,7 @@ export class PostsController {
   async deletePostById(@Param('id') id: string) {
     return this.postsService.deletePost(id);
   }
-  
+
   @Patch(':id/archive')
   //@UseGuards(IsLoggedInGuard, IsPostOwnerGuard)
   async archivePostById(@Param('id') id: string) {
@@ -56,7 +56,7 @@ export class PostsController {
   }
 
   @Patch(':id/AddComment')
-  @UseGuards(IsArchived,/* IsLoggedInGuard */)
+  @UseGuards(IsArchived /* IsLoggedInGuard */)
   async addComment(@Param('id') id: string, @Body() commentData: CommentDTO) {
     return this.postsService.addComment(id, commentData);
   }

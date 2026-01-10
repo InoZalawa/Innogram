@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext} from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -11,10 +11,12 @@ export class PostNotArchivedGuard implements CanActivate {
       return false;
     }
     const userId = request.user?.id; // Assuming user is set by auth middleware
-    const authorId = await this.prisma.post.findUnique({
-      where: { id: postID },
-      select: { authorId: true },
-    }).then(post => post?.authorId);
+    const authorId = await this.prisma.post
+      .findUnique({
+        where: { id: postID },
+        select: { authorId: true },
+      })
+      .then((post) => post?.authorId);
     if (userId === authorId) {
       return true; // Author can always access their own posts
     }

@@ -34,7 +34,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
         id: testUserId,
         username: 'testuser',
         email: 'test@test.test',
-        password: 'testTEST123!@#', 
+        password: 'testTEST123!@#',
       },
     });
   }
@@ -46,4 +46,3 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     });
   }
 }
-

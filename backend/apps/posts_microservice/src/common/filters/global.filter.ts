@@ -1,4 +1,9 @@
-import { ExceptionFilter, ArgumentsHost, Catch, HttpStatus } from '@nestjs/common';
+import {
+  ExceptionFilter,
+  ArgumentsHost,
+  Catch,
+  HttpStatus,
+} from '@nestjs/common';
 import logger from '../../utils/logger';
 
 @Catch() // gets all exceptions
@@ -15,6 +20,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
       success: false,
       status: status,
       message: 'A critical system error occurred',
-     });
+    });
   }
 }

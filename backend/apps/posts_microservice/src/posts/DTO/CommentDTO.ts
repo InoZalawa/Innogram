@@ -1,18 +1,18 @@
-import { IsNotEmpty, IsString} from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CommentDTO {
   @IsNotEmpty()
   @IsString()
   readonly postId: string;
-  
+
   @IsNotEmpty()
   @IsString()
-  readonly commentId: string
-  
+  readonly commentId: string;
+
   @IsNotEmpty()
   @IsString()
   readonly content: string;
-  
+
   @IsNotEmpty()
   @IsString()
   readonly authorId: string;
