@@ -1,9 +1,7 @@
-
-const ProfilePage = ({profilePicture,}) => {
-
-  return(
+const ProfilePage = ({ profilePicture }) => {
+  return (
     <div>
-        <img src={profilePicture} alt="Profile Picture" />
+      <img src={profilePicture} alt="Profile Picture" />
     </div>
   );
-}
+};
