@@ -1,6 +1,15 @@
 import axios from "axios";
 import EmojiPeaker from "emoji-picker-react";
 import { useState } from "react";
+import {
+  Box,
+  Button,
+  TextField,
+  Stack,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
+import EmojiEmotionsIcon from "@mui/icons-material/EmojiEmotions";
 
 interface CommentBoxProps {
   author: string;
@@ -23,28 +32,54 @@ const CommentBox: React.FC<CommentBoxProps> = ({ author }) => {
   };
 
   return (
-    <div>
-      <button onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}>
-        😊
-      </button>
-      <form onSubmit={handleSubmit} noValidate>
-        <textarea
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-        />
-        <button type="submit">Post</button>
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      noValidate
+      sx={{ width: "100%", position: "relative" }}
+    >
+      <Stack spacing={2}>
+        <Stack direction="row" alignItems="flex-start" gap={1}>
+          <Tooltip title="Add emoji">
+            <IconButton
+              onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
+              color={isEmojiPickerOpen ? "primary" : "default"}
+              aria-label="Add emoji"
+              size="small"
+            >
+              <EmojiEmotionsIcon />
+            </IconButton>
+          </Tooltip>
+          <TextField
+            multiline
+            rows={3}
+            variant="outlined"
+            fullWidth
+            placeholder="Write a comment..."
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            aria-label="Comment text"
+          />
+        </Stack>
 
         {isEmojiPickerOpen && (
-          <div>
-            {
-              <EmojiPeaker
-                onEmojiClick={(e) => setComment(comment + e.emoji)}
-              />
-            }
-          </div>
+          <Box sx={{ position: "relative", zIndex: 10 }}>
+            <EmojiPeaker onEmojiClick={(e) => setComment(comment + e.emoji)} />
+          </Box>
         )}
-      </form>
-    </div>
+
+        <Stack direction="row" justifyContent="flex-end" gap={1}>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={!comment.trim()}
+            size="small"
+          >
+            Post
+          </Button>
+        </Stack>
+      </Stack>
+    </Box>
   );
 };
 
