@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "ts-node-dev -r tsconfig-paths/register --project tsconfig.json --respawn --transpile-only --poll --ignore-watch node_modules --ignore-watch .git --ignore-watch dist --clear apps/auth_microservice/app.ts",
+    "start": "concurrently \"ts-node-dev -r tsconfig-paths/register --project tsconfig.json --respawn --transpile-only apps/auth_microservice/app.ts\" \"ts-node-dev -r tsconfig-paths/register --project tsconfig.json --respawn --transpile-only apps/posts_microservice/src/main.ts\"",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "check-format": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "docker:up": "docker-compose up --build",
@@ -34,6 +34,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/passport-google-oauth20": "^2.0.17",
     "@types/pg": "^8.15.6",
+    "concurrently": "^7.6.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react": "^7.37.5",
     "globals": "^16.5.0",
@@ -50,11 +51,16 @@
     "packages/*"
   ],
   "dependencies": {
+    "@nestjs/class-validator": "^0.13.4",
     "@nestjs/common": "^11.1.9",
+    "@nestjs/core": "^11.1.9",
+    "@nestjs/platform-express": "^11.1.9",
     "@prisma/adapter-pg": "^7.1.0",
     "@prisma/client": "^7.0.1",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
@@ -67,6 +73,8 @@
     "pg": "^8.16.3",
     "prisma": "^7.1.0",
     "redis": "^5.10.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
     "ts-node": "^10.9.2",
     "winston": "^3.15.0"
   }

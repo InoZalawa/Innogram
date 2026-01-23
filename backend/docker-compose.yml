@@ -55,7 +55,8 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
     ports:
-      - "3001:3001"
+      - "3001:3001" # Expose port for auth microservice
+      - "3002:3002" # Expose port for posts microservice
     volumes:
       - ./apps:/app/apps
       - ./package.json:/app/package.json

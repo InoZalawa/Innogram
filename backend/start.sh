@@ -7,6 +7,29 @@ export NODE_OPTIONS="--no-warnings"
 echo "Generating Prisma Client..." >&2
 npx prisma generate --schema=./apps/auth_microservice/db/schema.prisma
 
+# Start posts microservice
+echo "Generating Prisma Client for posts microservice..." >&2
+npx prisma generate --schema=./apps/posts_microservice/src/prisma/schema.prisma
+
+echo "Running database migrations for posts microservice..." >&2
+if [ -z "$DATABASE_URL" ]; then
+  echo "ERROR: DATABASE_URL environment variable is not set" >&2
+  exit 1
+fi
+
+POSTS_MIGRATIONS_DIR="./apps/posts_microservice/src/prisma/migrations"
+if [ -d "$POSTS_MIGRATIONS_DIR" ] && [ "$(ls -A "$POSTS_MIGRATIONS_DIR" 2>/dev/null)" ]; then
+  echo "Applying Prisma migrations for posts microservice..." >&2
+  npx prisma migrate deploy --schema=./apps/posts_microservice/src/prisma/schema.prisma
+else
+  echo "No migrations found for posts; pushing schema to database..." >&2
+  npx prisma db push --schema=./apps/posts_microservice/src/prisma/schema.prisma --accept-data-loss
+fi
+
+echo "Starting posts microservice in the background..." >&2
+npx ts-node-dev -r tsconfig-paths/register --project tsconfig.json --respawn --transpile-only apps/posts_microservice/src/main.ts &
+# end posts microservice srart
+
 echo "Running database migrations..." >&2
 if [ -z "$DATABASE_URL" ]; then
   echo "ERROR: DATABASE_URL environment variable is not set" >&2

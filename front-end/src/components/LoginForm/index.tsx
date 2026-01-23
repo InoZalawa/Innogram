@@ -2,11 +2,11 @@ import { useState } from "react";
 
 import { Input } from "../../components";
 
-const LoginForm = () => {
+const LoginForm: React.FC = () => {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     // TODO: wire API login when backend is ready.
   };
