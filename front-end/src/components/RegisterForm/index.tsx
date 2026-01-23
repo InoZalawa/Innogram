@@ -1,9 +1,18 @@
 import { useState } from "react";
 import axios from "axios";
-
 import { Input } from "..";
+import {
+  Box,
+  Button,
+  IconButton,
+  Link,
+  Stack,
+  Typography,
+  Paper,
+  Divider,
+} from "@mui/material";
+import GoogleIcon from "@mui/icons-material/Google";
 
-// Simple-but-sane email check (no backtracking heavy regexes needed here).
 const mailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const lenRegex = /^.{8,}$/;
 const lowerUpperCaseRegex = /^(?=.*[a-z])(?=.*[A-Z]).+$/;
@@ -28,7 +37,6 @@ const mailValidationArr = [
   { regex: mailRegex, message: "Use a valid email like user@example.com" },
 ];
 
-// Reusable helper so we always validate with fresh values (avoids stale state).
 const validateAgainstRules: (
   validationArr: { regex: RegExp; message: string }[],
   value: string,
@@ -97,61 +105,95 @@ const RegisterForm = () => {
   };
 
   return (
-    <div>
-      <h2>Sign up!</h2>
-      <form onSubmit={handleSubmit} noValidate>
-        <Input
-          label="Username"
-          name="username"
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          errors={usernameError}
-          required
-        />
+    <Paper elevation={3} sx={{ maxWidth: 500, margin: "auto", mt: 5, p: 3 }}>
+      <Stack spacing={3}>
+        <Typography variant="h5" align="center" sx={{ fontWeight: "bold" }}>
+          Sign up!
+        </Typography>
 
-        <Input
-          label="Email"
-          name="email"
-          type="email"
-          value={mail}
-          onChange={(e) => setMail(e.target.value)}
-          errors={mailError}
-          required
-        />
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          noValidate
+          sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+        >
+          <Input
+            label="Username"
+            name="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            errors={usernameError}
+            required
+          />
 
-        <Input
-          label="Password"
-          name="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          errors={passwordErrors}
-          required
-        />
+          <Input
+            label="Email"
+            name="email"
+            type="email"
+            value={mail}
+            onChange={(e) => setMail(e.target.value)}
+            errors={mailError}
+            required
+          />
 
-        <Input
-          label="Repeat password"
-          name="repeat-password"
-          type="password"
-          value={repeatPassword}
-          onChange={(e) => setRepeatPassword(e.target.value)}
-          errors={repeatedPasswordError}
-          required
-        />
+          <Input
+            label="Password"
+            name="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            errors={passwordErrors}
+            required
+          />
 
-        <button type="submit">Submit</button>
-      </form>
-      {formError && <p>{formError}</p>}
-      <div>
-        <p>or just sign up with Google account!</p>
-      </div>
-      <p>
-        Already have an account?
-        <br />
-        <a href="">Log in here</a>
-      </p>
-    </div>
+          <Input
+            label="Repeat password"
+            name="repeat-password"
+            type="password"
+            value={repeatPassword}
+            onChange={(e) => setRepeatPassword(e.target.value)}
+            errors={repeatedPasswordError}
+            required
+          />
+
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            fullWidth
+            sx={{ mt: 1 }}
+          >
+            Submit
+          </Button>
+        </Box>
+
+        {formError && (
+          <Typography variant="body2" color="error" align="center">
+            {formError}
+          </Typography>
+        )}
+
+        <Divider />
+
+        <Box sx={{ textAlign: "center" }}>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            or just sign up with Google account!
+          </Typography>
+          <IconButton aria-label="Sign up with Google" color="primary">
+            <GoogleIcon />
+          </IconButton>
+        </Box>
+
+        <Divider />
+
+        <Typography variant="body2" color="text.secondary" align="center">
+          Already have an account?{" "}
+          <Link href="#" underline="hover">
+            Log in here
+          </Link>
+        </Typography>
+      </Stack>
+    </Paper>
   );
 };
 export default RegisterForm;

@@ -2,6 +2,21 @@ import CommentBox from "../CommentBox";
 import AttachmentCarousel from "../AttachmentsCarousel";
 import React from "react";
 import { Attachment } from "../../DTO/AttachmentDTO";
+import {
+  Box,
+  Card,
+  CardContent,
+  Stack,
+  Typography,
+  IconButton,
+  Tooltip,
+  Divider,
+} from "@mui/material";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import ShareIcon from "@mui/icons-material/Share";
+import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 
 interface PostProps {
   author: string;
@@ -10,6 +25,7 @@ interface PostProps {
   attachments?: string[];
   likes?: number;
 }
+
 const Post: React.FC<PostProps> = ({
   author,
   contacts,
@@ -31,30 +47,81 @@ const Post: React.FC<PostProps> = ({
           : "",
       );
     }
-  }, [isLiked, contacts]); // TODO: add flexibility for text based on likes count and contacts length
+  }, [isLiked, contacts]);
 
   return (
-    <div>
-      {attachments && attachments.length > 0 && (
-        <AttachmentCarousel
-          attachments={attachments.map((att) => new Attachment(att, "image"))}
-        />
-      )}
-      <div>
-        <div>
-          <button onClick={() => setIsLiked(!isLiked)}>like</button>
-          <button>comment</button>
-          <button>share</button>
-        </div>
-        <div>
-          <button>save</button>
-        </div>
-      </div>
-      <div className="LikedBy">{likedByText}</div>
-      <div className="Description">{description}</div>
+    <Card sx={{ maxWidth: 600, margin: "auto", mb: 3 }}>
+      <CardContent>
+        {attachments && attachments.length > 0 && (
+          <Box sx={{ mb: 2 }}>
+            <AttachmentCarousel
+              attachments={attachments.map(
+                (att) => new Attachment(att, "image"),
+              )}
+            />
+          </Box>
+        )}
 
-      <CommentBox author={author} />
-    </div>
+        <Stack spacing={2}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ justifyContent: "space-between", alignItems: "center" }}
+          >
+            <Stack direction="row" spacing={1}>
+              <Tooltip title="Like">
+                <IconButton
+                  onClick={() => setIsLiked(!isLiked)}
+                  aria-label={isLiked ? "Unlike" : "Like"}
+                  size="small"
+                >
+                  {isLiked ? (
+                    <FavoriteIcon sx={{ color: "error.main" }} />
+                  ) : (
+                    <FavoriteBorderIcon />
+                  )}
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Comment">
+                <IconButton aria-label="Comment" size="small">
+                  <ChatBubbleOutlineIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Share">
+                <IconButton aria-label="Share" size="small">
+                  <ShareIcon />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+            <Tooltip title="Save">
+              <IconButton aria-label="Save" size="small">
+                <BookmarkBorderIcon />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+
+          {likedByText && (
+            <Typography variant="body2" color="text.secondary">
+              {likedByText}
+            </Typography>
+          )}
+
+          <Divider />
+
+          {description && (
+            <Typography variant="body2" sx={{ wordBreak: "break-word" }}>
+              {description}
+            </Typography>
+          )}
+
+          <Divider />
+
+          <Box>
+            <CommentBox author={author} />
+          </Box>
+        </Stack>
+      </CardContent>
+    </Card>
   );
 };
 
