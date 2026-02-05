@@ -8,16 +8,19 @@ import {
   Patch,
   Delete,
   UseFilters,
+  UseInterceptors,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { PostDTO } from './DTO/PostDTO';
 import { CommentDTO } from './DTO/CommentDTO';
 import { HttpExceptionFilter } from '../common/filters/http.filter';
 import { PostNotArchivedGuard as IsArchived } from '../common/guards/post-not-archived.guard';
+import { HttpInterceptor } from '../common/interceptors/http.interceptor';
 //import { AuthGuard as IsLoggedInGuard } from '../common/guards/auth.guard';
 //import { IsAuthorGuard as IsPostOwnerGuard } from '../common/guards/is-author.guard';
 
 @Controller('posts')
+@UseInterceptors(HttpInterceptor)
 @UseFilters(HttpExceptionFilter)
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}

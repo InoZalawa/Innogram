@@ -56,7 +56,11 @@ Thumbs.db
 **/prisma/query_compiler*
 **/prisma/wasm-*
 **/node_modules/.prisma/
+**/generated/
 
 #Postman Requests
 *.Postman_Requests_Posts.json
 *.Postman_Requests_Auth.json
+
+# Prisma generated 
+**/
