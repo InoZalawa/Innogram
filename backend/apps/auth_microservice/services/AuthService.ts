@@ -39,13 +39,15 @@ export const registerUser = async (signUpDto: SignUpDto) => {
     const result = await prisma.$transaction(async (tx: any) => {
       const encryptedPassword = await bcrypt.hash(signUpDto.password, 12);
 
-      const existingUser = await tx.user.findFirst({
-        where: {
-          OR: [{ email: signUpDto.email }, { username: signUpDto.username }],
-        },
+      // Check uniqueness: email in Account, username in Profile
+      const accountByEmail = await tx.account.findUnique({
+        where: { email: signUpDto.email.toLowerCase() },
+      });
+      const profileByUsername = await tx.profile.findUnique({
+        where: { username: signUpDto.username },
       });
 
-      if (existingUser) {
+      if (accountByEmail || profileByUsername) {
         logger.warn(
           `Registration failed: user already exists - ${signUpDto.email}`
         );
@@ -56,12 +58,26 @@ export const registerUser = async (signUpDto: SignUpDto) => {
         };
       }
 
-      // Create new user
-      await tx.user.create({
+      // Create new user, then account and profile linked to user
+      const newUser = await tx.user.create({ data: {} });
+
+      await tx.account.create({
         data: {
+          user_id: newUser.id,
+          email: signUpDto.email.toLowerCase(),
+          password_hash: encryptedPassword,
+          provider: 'local',
+          created_by: newUser.id,
+        },
+      });
+
+      await tx.profile.create({
+        data: {
+          user_id: newUser.id,
           username: signUpDto.username,
-          password: encryptedPassword,
-          email: signUpDto.email,
+          display_name: signUpDto.username,
+          birthday: new Date(),
+          created_by: newUser.id,
         },
       });
 
@@ -85,13 +101,33 @@ export const registerUser = async (signUpDto: SignUpDto) => {
 };
 
 export const logInUser = async (logInDto: LogInDTO) => {
-  const user = await prisma.user.findFirst({
-    where: {
-      OR: [{ username: logInDto.login }, { email: logInDto.login }],
-    },
+  // Try to find account by email
+  let account = await prisma.account.findUnique({
+    where: { email: logInDto.login },
   });
 
-  if (!user || !(await bcrypt.compare(logInDto.password, user.password))) {
+  // If not found by email, try username -> profile -> account
+  let profile: any = null;
+  if (!account) {
+    profile = await prisma.profile.findUnique({
+      where: { username: logInDto.login },
+    });
+    if (profile) {
+      account = await prisma.account.findFirst({
+        where: { user_id: profile.user_id },
+      });
+    }
+  } else {
+    // if found by email, try to get profile for username
+    profile = await prisma.profile.findFirst({
+      where: { user_id: account.user_id },
+    });
+  }
+
+  if (
+    !account ||
+    !(await bcrypt.compare(logInDto.password, account.password_hash))
+  ) {
     return {
       success: false,
       status: 401,
@@ -99,7 +135,7 @@ export const logInUser = async (logInDto: LogInDTO) => {
     };
   }
 
-  const tokenPayload = { userId: user.id, sub: user.email };
+  const tokenPayload = { userId: account.user_id, sub: account.email };
   const accessToken = jwt.sign(tokenPayload, JWT_KEY!, {
     expiresIn: ACCESS_TOKEN_EXPIRY,
   });
@@ -108,7 +144,10 @@ export const logInUser = async (logInDto: LogInDTO) => {
   });
 
   try {
-    await RedisAuth.storeRefreshTokenId(user.id.toString(), refreshToken);
+    await RedisAuth.storeRefreshTokenId(
+      account.user_id.toString(),
+      refreshToken
+    );
   } catch (err) {
     logger.error('Failed to store session in Redis:', err);
   }
@@ -118,7 +157,11 @@ export const logInUser = async (logInDto: LogInDTO) => {
     status: 200,
     accessToken,
     refreshToken,
-    user: { id: user.id, email: user.email, username: user.username },
+    user: {
+      id: account.user_id,
+      email: account.email,
+      username: profile?.username ?? null,
+    },
   };
 };
 
@@ -170,7 +213,7 @@ export const refreshAccessToken = async (oldRefreshToken: string) => {
   }
 };
 export const handleLogout = async (
-  userId: number,
+  userId: string,
   refreshToken: string,
   accessToken?: string
 ) => {
@@ -180,16 +223,21 @@ export const handleLogout = async (
     if (user === null) {
       return { success: false, status: 400, message: 'Invalid refresh token' };
     }
-    if (Number(user) !== userId) {
+    if (user !== userId) {
       logger.warn(
         `Security alert: ${userId} tried to logout session of ${user}`
       );
       return { success: false, status: 403, message: 'Access denied' };
     }
 
+    // Blacklist both tokens
     if (accessToken) {
       await RedisAuth.blacklistToken(accessToken, ACCESS_TOKEN_EXPIRY);
     }
+    await RedisAuth.blacklistToken(refreshToken, REFRESH_TOKEN_EXPIRY);
+
+    // Delete the refresh token from active sessions
+    await RedisAuth.deleteRefreshToken(refreshToken);
 
     return { success: true, status: 200, message: 'Logged out successfully' };
   } catch {
@@ -259,26 +307,41 @@ export const handleGoogleAuth = async (googleProfile: {
   }
   googleProfile.gmail = googleProfile.gmail.toLowerCase();
   try {
-    let user = await prisma.user.findUnique({
+    let account = await prisma.account.findUnique({
       where: { email: googleProfile.gmail },
     });
 
-    if (!user) {
+    if (!account) {
       const newRandomPassword = await bcrypt.hash(Math.random().toString(), 12);
-      user = await prisma.user.create({
+      const newUser = await prisma.user.create({ data: {} });
+
+      account = await prisma.account.create({
         data: {
+          user_id: newUser.id,
           email: googleProfile.gmail,
-          password: newRandomPassword,
+          password_hash: newRandomPassword,
+          provider: 'google',
+          created_by: newUser.id,
+        },
+      });
+
+      await prisma.profile.create({
+        data: {
+          user_id: newUser.id,
           username:
             googleProfile.gmail.split('@')[0] +
             '_' +
             googleProfile.id.slice(0, 6),
+          display_name: googleProfile.gmail.split('@')[0],
+          birthday: new Date(),
+          created_by: newUser.id,
         },
       });
-      logger.info(`New user registered via Google: ${user.email}`);
+
+      logger.info(`New user registered via Google: ${account.email}`);
     }
 
-    const tokenPayload = { userId: user.id, sub: user.email };
+    const tokenPayload = { userId: account.user_id, sub: account.email };
     const accessToken = jwt.sign(tokenPayload, JWT_KEY, {
       issuer: 'innogram-auth-service',
       expiresIn: ACCESS_TOKEN_EXPIRY,
@@ -300,7 +363,16 @@ export const handleGoogleAuth = async (googleProfile: {
       status: 200,
       accessToken,
       refreshToken,
-      user: { id: user.id, email: user.email, username: user.username },
+      user: {
+        id: account.user_id,
+        email: account.email,
+        username:
+          (
+            await prisma.profile.findFirst({
+              where: { user_id: account.user_id },
+            })
+          )?.username ?? null,
+      },
     };
   } catch (err) {
     logger.error('Google auth error:', err);

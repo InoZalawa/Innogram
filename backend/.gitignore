@@ -61,6 +61,6 @@ Thumbs.db
 #Postman Requests
 *.Postman_Requests_Posts.json
 *.Postman_Requests_Auth.json
-
+*.Postman_Requests_Core_API.json
 # Prisma generated 
 **/

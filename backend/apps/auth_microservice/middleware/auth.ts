@@ -5,7 +5,7 @@ import { getRedisClient } from '../utils/redisClient';
 import { RedisAuthRepository } from '../DTO/RedisRepository';
 
 export interface AuthRequest extends Request {
-  userId?: number;
+  userId?: string;
   userEmail?: string;
 }
 
@@ -54,7 +54,7 @@ export const authenticateToken = async (
 
   try {
     const decoded = jwt.verify(token, jwtKey) as {
-      userId: number;
+      userId: string;
       sub: string;
     };
 

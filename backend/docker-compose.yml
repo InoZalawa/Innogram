@@ -40,25 +40,30 @@ services:
     container_name: innogram-backend
     environment:
       NODE_ENV: development
-      PORT: 3001
       DB_USER: ${DB_USER:-postgres}
       DB_HOST: postgres
       DB_DATABASE: ${DB_DATABASE:-Innogram}
       DB_PORT: 5432
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       DB_URL: "postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_DATABASE:-Innogram}?schema=public"
-      DATABASE_URL: "postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_DATABASE:-Innogram}?schema=public"
+#     Zamiast jednej zmiennej, definiujemy dedykowane schematy:
+      AUTH_DATABASE_URL: "postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_DATABASE:-Innogram}?schema=auth"
+      POSTS_DATABASE_URL: "postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_DATABASE}?schema=posts&options=-csearch_path%3Dposts"      # Zostawiamy DATABASE_URL jako fallback (domyślnie dla auth)
+      DATABASE_URL: "postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_DATABASE:-Innogram}?schema=auth"
       JWT_KEY: ${JWT_KEY}
+      AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://backend:3001}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
     ports:
-      - "3001:3001" # Expose port for auth microservice
-      - "3002:3002" # Expose port for posts microservice
+      - "3001:3001" # Auth microservice
+      - "3002:3002" # Posts microservice
+      - "3003:3003" # Core microservice
     volumes:
       - ./apps:/app/apps
+      - /app/node_modules
       - ./package.json:/app/package.json
       - ./tsconfig.json:/app/tsconfig.json
       - ./tsconfig.base.json:/app/tsconfig.base.json

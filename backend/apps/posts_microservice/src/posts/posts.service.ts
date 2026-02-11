@@ -15,7 +15,6 @@ export class PostsService {
 
   async createPost(postData: PostDTO) {
     try {
-      // Prisma rzuci błąd sama, jeśli dane będą niepoprawne
       return await this.prisma.post.create({
         data: {
           content: postData.content,
@@ -27,7 +26,7 @@ export class PostsService {
                 file: att.file,
               })) || [],
           },
-        },
+        }, // Usunięto zbędny znak 'f'
       });
     } catch (err) {
       logger.error('Error creating post:', err);
@@ -36,7 +35,6 @@ export class PostsService {
   }
 
   async updatePost(postId: string, updatedData: Partial<PostDTO>) {
-    // najpierw sprawdzamy czy istnieje
     const currentPost = await this.prisma.post.findUnique({
       where: { id: postId },
     });

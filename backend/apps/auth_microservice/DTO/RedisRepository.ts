@@ -33,11 +33,14 @@ export class RedisAuthRepository {
     const userId = await this.client.get(`rt:${tokenId}`);
 
     if (userId) {
-      await this.client.del(`rt:${tokenId}`);
       return userId;
     }
 
     return null;
+  }
+
+  async deleteRefreshToken(tokenId: string): Promise<void> {
+    await this.client.del(`rt:${tokenId}`);
   }
 }
 

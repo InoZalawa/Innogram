@@ -1,15 +1,87 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "./generated"
+  provider      = "prisma-client-js"
+  output        = "./generated"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
   provider = "postgresql"
+  schemas = ["auth"]
 }
 
+// Models aligned with core_microservice TypeORM entities
 model User {
-  id       Int    @id @default(autoincrement())
-  username String @unique
-  email    String @unique
-  password String
+  id         String    @id @default(uuid())
+  role       String    @default("User")
+  disabled   Boolean   @default(false)
+  created_at DateTime  @default(now())
+  created_by String?
+  updated_at DateTime  @updatedAt
+  updated_by String?
+
+  accounts   Account[] @relation("UserAccounts")
+  profiles   Profile[] @relation("UserProfiles")
+
+  @@map("users")
+  @@schema("auth")
+}
+
+model Account {
+  id           String   @id @default(uuid())
+  user_id      String
+  email        String   @unique
+  password_hash String
+  provider     String   @default("local")
+  provider_id  String?
+  last_login_at DateTime?
+  created_at   DateTime @default(now())
+  created_by   String
+  updated_at   DateTime @updatedAt
+  updated_by   String?
+
+  user         User     @relation("UserAccounts", fields: [user_id], references: [id])
+
+  @@map("accounts")
+  @@schema("auth")
+}
+
+model Profile {
+  id           String   @id @default(uuid())
+  user_id      String
+  username     String   @unique
+  display_name String
+  birthday     DateTime
+  bio          String?
+  avatar_url   String?
+  is_public    Boolean  @default(true)
+  created_at   DateTime @default(now())
+  created_by   String
+  updated_at   DateTime @updatedAt
+  updated_by   String?
+  deleted      Boolean  @default(false)
+
+  user         User     @relation("UserProfiles", fields: [user_id], references: [id])
+  following    ProfileFollow[] @relation("Follower")
+  followers    ProfileFollow[] @relation("Followed")
+
+  @@map("profiles")
+  @@schema("auth")
+}
+
+model ProfileFollow {
+  id                    String   @id @default(uuid())
+  follower_profile_id   String
+  followed_profile_id   String
+  accepted              Boolean?
+  created_at            DateTime @default(now())
+  created_by            String
+  updated_at            DateTime @updatedAt
+  updated_by            String?
+
+  followerProfile       Profile  @relation("Follower", fields: [follower_profile_id], references: [id])
+  followedProfile       Profile  @relation("Followed", fields: [followed_profile_id], references: [id])
+
+  @@unique([follower_profile_id, followed_profile_id])
+  @@map("profiles_follows")
+  @@schema("auth")
 }
