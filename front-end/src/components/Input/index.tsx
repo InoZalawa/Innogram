@@ -1,3 +1,11 @@
+import {
+  InputLabel,
+  List,
+  ListItem,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { forwardRef } from "react";
 
 interface InputProps {
@@ -39,14 +47,14 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       undefined;
 
     return (
-      <div className={`form-field ${className}`.trim()}>
+      <Stack className={`form-field ${className}`.trim()}>
         {label && (
-          <label htmlFor={inputId}>
+          <InputLabel htmlFor={inputId}>
             {label}
             {required ? " *" : ""}
-          </label>
+          </InputLabel>
         )}
-        <input
+        <TextField
           id={inputId}
           name={name || inputId}
           type={type}
@@ -59,18 +67,18 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
         />
         {helperText && (
-          <p id={helperId} className="input-helper">
+          <Typography id={helperId} className="input-helper">
             {helperText}
-          </p>
+          </Typography>
         )}
         {hasErrors && (
-          <ul id={errorId} className="input-errors">
+          <List id={errorId} className="input-errors">
             {errors.map((error, index) => (
-              <li key={index}>{error}</li>
+              <ListItem key={index}>{error}</ListItem>
             ))}
-          </ul>
+          </List>
         )}
-      </div>
+      </Stack>
     );
   },
 );

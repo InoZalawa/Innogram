@@ -1,10 +1,11 @@
 import { LoginForm } from "../../components";
+import { Container } from "@mui/material";
 
 const LoginPage: React.FC = () => {
   return (
-    <main>
+    <Container component="main" sx={{ py: 4 }}>
       <LoginForm />
-    </main>
+    </Container>
   );
 };
 

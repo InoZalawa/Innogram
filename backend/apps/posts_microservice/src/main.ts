@@ -12,6 +12,8 @@ async function bootstrap() {
     })
   );
   app.useGlobalFilters(new AllExceptionsFilter());
-  await app.listen(3002);
+  const port = process.env.PORT || 3002;
+  await app.listen(port);
+  console.log(`Posts Microservice running on port ${port}`);
 }
 bootstrap();

@@ -1,6 +1,16 @@
 import { useState } from "react";
-
 import { Input } from "../../components";
+import {
+  Box,
+  Button,
+  IconButton,
+  Link,
+  Stack,
+  Typography,
+  Paper,
+  Divider,
+} from "@mui/material";
+import GoogleIcon from "@mui/icons-material/Google";
 
 const LoginForm: React.FC = () => {
   const [identifier, setIdentifier] = useState("");
@@ -8,43 +18,72 @@ const LoginForm: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // TODO: wire API login when backend is ready.
+    // TODO: Implement login logic here
   };
-
+  //sthrow new Error("Test error for ErrorBoundary");
   return (
-    <div>
-      <h2>Log in!</h2>
-      <form onSubmit={handleSubmit} noValidate>
-        <Input
-          label="Username/Email"
-          name="identifier"
-          type="text"
-          value={identifier}
-          onChange={(e) => setIdentifier(e.target.value)}
-          errors={[]}
-          required
-        />
-        <Input
-          label="Password"
-          name="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          errors={[]}
-          required
-        />
-        <button type="submit">Submit</button>
-      </form>
-      <div>
-        <p>or log in with Google account!</p>
-        <button></button>
-      </div>
-      <p>
-        Don't have account yet?
-        <br />
-        <a href="">Sign up here</a>
-      </p>
-    </div>
+    <Paper elevation={3} sx={{ maxWidth: 400, margin: "auto", mt: 5, p: 3 }}>
+      <Stack spacing={3}>
+        <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+          Log in!
+        </Typography>
+
+        <Box
+          onSubmit={handleSubmit}
+          noValidate
+          component="form"
+          sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+        >
+          <Input
+            label="Username/Email"
+            name="identifier"
+            type="text"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
+            errors={[]}
+            required
+          />
+          <Input
+            label="Password"
+            name="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            errors={[]}
+            required
+          />
+          <Button type="submit" variant="contained" fullWidth size="large">
+            Submit
+          </Button>
+        </Box>
+
+        <Divider />
+
+        <Box sx={{ textAlign: "center" }}>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            or log in with Google account!
+          </Typography>
+          <IconButton
+            aria-label="Login with Google"
+            color="primary"
+            size="large"
+          >
+            <GoogleIcon />
+          </IconButton>
+        </Box>
+
+        <Divider />
+
+        <Stack spacing={1}>
+          <Typography variant="body2" color="text.secondary">
+            Don't have account yet?
+          </Typography>
+          <Link href="#" underline="hover" variant="body2">
+            Sign up here
+          </Link>
+        </Stack>
+      </Stack>
+    </Paper>
   );
 };
 

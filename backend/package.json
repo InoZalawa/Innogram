@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "concurrently \"ts-node-dev -r tsconfig-paths/register --project tsconfig.json --respawn --transpile-only apps/auth_microservice/app.ts\" \"ts-node-dev -r tsconfig-paths/register --project tsconfig.json --respawn --transpile-only apps/posts_microservice/src/main.ts\"",
+    "start": "concurrently \"ts-node-dev -r tsconfig-paths/register --project tsconfig.json --respawn --transpile-only apps/auth_microservice/app.ts\" \"PORT=3002 ts-node-dev -r tsconfig-paths/register --project tsconfig.json --respawn --transpile-only apps/posts_microservice/src/main.ts\" \"PORT=3003 ts-node-dev -r tsconfig-paths/register --project tsconfig.json --respawn --transpile-only apps/core_microservice/src/main.ts\"",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "check-format": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "docker:up": "docker-compose up --build",
@@ -56,7 +56,7 @@
     "@nestjs/core": "^11.1.9",
     "@nestjs/platform-express": "^11.1.9",
     "@prisma/adapter-pg": "^7.1.0",
-    "@prisma/client": "^7.0.1",
+    "@prisma/client": "^7.3.0",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",

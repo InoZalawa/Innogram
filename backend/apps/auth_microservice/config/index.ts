@@ -11,7 +11,11 @@ export const config = {
     refreshTokenExpiry: parseInt(process.env.REFRESH_TOKEN_EXPIRY || '600', 10), // 10 minutes
   },
   database: {
-    url: process.env.DATABASE_URL || process.env.DB_URL || '',
+    url:
+      process.env.AUTH_DATABASE_URL ||
+      process.env.DATABASE_URL ||
+      process.env.DB_URL ||
+      '',
   },
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
@@ -31,5 +35,7 @@ if (!config.jwt.key) {
 }
 
 if (!config.database.url) {
-  throw new Error('DATABASE_URL or DB_URL environment variable is required');
+  throw new Error(
+    'AUTH_DATABASE_URL, DATABASE_URL or DB_URL environment variable is required'
+  );
 }
